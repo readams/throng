@@ -1,0 +1,14 @@
+package throng.message;
+
+message node {
+    // topographical node ID
+    repeated uint32 node_id = 1 [packed=true];
+    // hostname or IP address
+    optional string hostname = 2;
+    // port number for contacting the node
+    optional uint32 port = 3;
+}
+
+message cluster_config {
+    repeated node nodes = 1;
+}

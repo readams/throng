@@ -1,28 +1,40 @@
-# Compiled Object files
-*.slo
-*.lo
+Makefile
+Makefile.in
+core
+.dirstamp
+.deps
+.libs
 *.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-
-# Compiled Static libraries
-*.lai
+*.lo
 *.la
-*.a
-*.lib
+*_test
+*~
+/build
+/install-sh
+/libtool
+/ltmain.sh
+/missing
+/test-driver
+/config.guess
+/autom4te.cache
+/aclocal.m4
+/config.h
+/config.h.in
+/config.log
+/config.status
+/config.sub
+/configure
+/depcomp
+/stamp-h1
+/compile
+m4/libtool.m4
+m4/lt*.m4
 
-# Executables
-*.exe
-*.out
-*.app
+/libthrong.pc
+doc/Doxyfile
+doc/html
+doc/latex
+doc/doxygen_*.db
+*.rpm
+*.spec
+*.tar.gz
