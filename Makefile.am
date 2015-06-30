@@ -27,12 +27,15 @@ AM_LDFLAGS = $(BOOST_LDFLAGS)
 
 throng_includedir = $(includedir)/throng
 throng_include_HEADERS = \
+	include/throng/ctx.h \
+	include/throng/error.h \
 	include/throng/vector_clock.h \
 	include/throng/versioned.h \
+	include/throng/store_config.h \
 	include/throng/store.h \
-	include/throng/store_client.h \
 	include/throng/serializer.h \
-	include/throng/ctx.h
+	include/throng/serializer_protobuf.h \
+	include/throng/store_client.h
 
 protobuf_headers = \
 	proto/throng_messages.pb.h
@@ -71,11 +74,13 @@ throng_test_LDADD = \
 	libthrong.la $(dependency_libs) \
 	$(BOOST_UNIT_TEST_FRAMEWORK_LIB)
 throng_test_SOURCES = \
+	test/include/ctx_fixture.h \
 	test/main.cpp \
 	test/ctx_test.cpp \
 	test/vector_clock_test.cpp \
 	test/versioned_test.cpp \
-	test/in_memory_storage_engine_test.cpp
+	test/in_memory_storage_engine_test.cpp \
+	test/store_client_test.cpp
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = libthrong.pc

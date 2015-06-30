@@ -49,11 +49,11 @@ void store_registry::register_store(const std::string& name,
     stores.emplace(name, std::move(underlying));
 }
 
-storage_engine* store_registry::get(const std::string& name) {
+storage_engine& store_registry::get(const std::string& name) {
     auto it = stores.find(name);
     if (it == stores.end())
         throw error::unknown_store(name);
-    return it->second.get();
+    return *it->second.get();
 }
 
 } /* namespace internal */

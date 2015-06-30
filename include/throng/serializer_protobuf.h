@@ -30,9 +30,9 @@
     template <> class serializer<_MessageLite> {                        \
         public:                                                         \
         std::shared_ptr<const std::string>                              \
-        serialize(const std::shared_ptr<const _MessageLite>& val) const { \
+        serialize_ptr(const _MessageLite& val) const {                  \
             auto result = std::make_shared<std::string>();              \
-            val->SerializeToString(result.get());                       \
+            val.SerializeToString(result.get());                        \
             return result;                                              \
         }                                                               \
                                                                         \

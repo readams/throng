@@ -36,6 +36,11 @@ namespace internal {
  */
 class storage_engine : public store<std::string, std::string> {
 public:
+    /**
+     * The type of versioned value used by a storage engine
+     */
+    typedef versioned<std::string> versioned_type;
+
     virtual ~storage_engine() {};
 
 };

@@ -24,6 +24,7 @@ BOOST_AUTO_TEST_SUITE(versioned_test)
 
 using std::string;
 using throng::versioned;
+using throng::vector_clock;
 using std::shared_ptr;
 using std::make_shared;
 
@@ -33,7 +34,8 @@ BOOST_AUTO_TEST_CASE(basic) {
     BOOST_CHECK(x);
     BOOST_CHECK_EQUAL("test", x.get());
     BOOST_CHECK_EQUAL("test", x.value_or("foo"));
-    BOOST_CHECK_EQUAL(throng::vector_clock{}, x.get_version());
+    BOOST_CHECK_EQUAL(vector_clock(x.get_version().get_timestamp(), {}),
+                      x.get_version());
 
     versioned<string> y { shared_ptr<string>(nullptr), {} };
     BOOST_CHECK(!y);

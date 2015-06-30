@@ -73,9 +73,13 @@ void ctx::stop() {
 
 }
 
-store<string,string>* ctx::get_raw_store(const string& name) {
+store<string,string>& ctx::get_raw_store(const string& name) {
     return pimpl->registry.get(name);
 }
 
+node_id ctx::get_local_node_id() const {
+    // XXX TODO
+    return {1};
+}
 
 } /* namespace throng */

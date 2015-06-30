@@ -17,12 +17,8 @@
  */
 
 #include "throng/ctx.h"
-#include "throng/serializer_protobuf.h"
-#include "throng_messages.pb.h"
 
 #include <boost/test/unit_test.hpp>
-
-THRONG_PROTOBUF_SERIALIZER(throng::message::node)
 
 BOOST_AUTO_TEST_SUITE(ctx_test)
 
@@ -33,13 +29,8 @@ BOOST_AUTO_TEST_CASE(basic) {
     ctx c {"/tmp/test"};
 
     c.register_store("test");
-    c.register_store("test2", store_config{});
     c.start();
     c.stop();
-
-    auto client = c.get_store_client<string, string>("test");
-
-    auto client_pb = c.get_store_client<string, message::node>("test2");
 }
 
 BOOST_AUTO_TEST_SUITE_END()

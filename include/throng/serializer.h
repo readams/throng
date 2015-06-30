@@ -37,12 +37,12 @@ public:
      * @return a shared pointer to the new serialized value
      */
     std::shared_ptr<const std::string>
-    serialize(const std::shared_ptr<const V>& val) const;
+    serialize_ptr(const V& val) const;
 
     /**
      * Serialize the user-defined type into a string
      * @param val the value to serialize
-     * @return a shared pointer to the new serialized value
+     * @return the new serialized value
      */
     std::string serialize(const V& val) const;
 
@@ -69,8 +69,8 @@ public:
      * @see serialize::serialize
      */
     std::shared_ptr<const std::string>
-    serialize(const std::shared_ptr<const std::string>& val) const {
-        return val;
+    serialize_ptr(const std::string& val) const {
+        return std::shared_ptr<std::string>(new std::string(val));
     }
 
     /**

@@ -22,7 +22,6 @@
 #ifndef THRONG_CTX_H
 #define THRONG_CTX_H
 
-#include "throng/store_client.h"
 #include "throng/store.h"
 #include "throng/serializer.h"
 #include "throng/store_config.h"
@@ -77,24 +76,21 @@ public:
                         const store_config& config);
 
     /**
-     * Get a store client to access a store that has already been
-     * registered locally.
+     * Get a raw reference to the underlying store.  Note that this is
+     * almost never what you want.  Instead, create a store_client to
+     * access the store.
+     *
+     * @param name the name of the store
+     * @return a reference to the raw store
      */
-    template <typename K, typename V,
-              class KeySerializer = serializer<K>,
-              class ValueSerializer = serializer<V>>
-        std::unique_ptr<store_client<K, V>>
-        get_store_client(const std::string& name) {
-        store<std::string,std::string>* delegate = get_raw_store(name);
-        serializing_store<K,V,KeySerializer,ValueSerializer> ss(*delegate);
-        return nullptr;
-    }
+    store<std::string,std::string>& get_raw_store(const std::string& name);
+
+    /**
+     * Get the node ID for the local node
+     */
+    node_id get_local_node_id() const;
 
 private:
-    /**
-     * Get a raw reference to the underlying store
-     */
-    store<std::string,std::string>* get_raw_store(const std::string& name);
 
     class ctx_impl;
     std::unique_ptr<ctx_impl> pimpl;

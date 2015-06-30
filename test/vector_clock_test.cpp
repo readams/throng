@@ -86,4 +86,44 @@ BOOST_AUTO_TEST_CASE(compare) {
     BOOST_CHECK_EQUAL(vector_clock::occurred::BEFORE, v1.compare(v2));
 }
 
+BOOST_AUTO_TEST_CASE(merge) {
+    using namespace throng;
+    auto now = std::chrono::system_clock::now();
+    node_id n1 = {1, 2, 3};
+    node_id n2 = {1, 3, 2};
+    node_id n3 = {2, 1, 4};
+    node_id n4 = {2, 2, 4};
+    node_id n5 = {2, 2, 5};
+
+    vector_clock e  { now, {} };
+    vector_clock v1 { now, {} };
+    vector_clock v2 { now, {} };
+    BOOST_CHECK_EQUAL(e, v1.merge(v2, now));
+
+    e  = { now, { {n1, 1} } };
+    v1 = { now, { {n1, 1} } };
+    v2 = { now, { {n1, 1} } };
+    BOOST_CHECK_EQUAL(e, v1.merge(v2, now));
+
+    e  = { now, { {n1, 1}, {n2, 1} } };
+    v1 = { now, { {n2, 1} } };
+    v2 = { now, { {n1, 1} } };
+    BOOST_CHECK_EQUAL(e, v1.merge(v2, now));
+
+    e  = { now, { {n1, 2} } };
+    v1 = { now, { {n1, 2} } };
+    v2 = { now, { {n1, 1} } };
+    BOOST_CHECK_EQUAL(e, v1.merge(v2, now));
+
+    e  = { now, { {n1, 2} } };
+    v1 = { now, { {n1, 1} } };
+    v2 = { now, { {n1, 2} } };
+    BOOST_CHECK_EQUAL(e, v1.merge(v2, now));
+
+    e  = { now, { {n1, 3}, {n2, 2}, {n3, 1}, {n4, 1}, {n5, 1} } };
+    v1 = { now, { {n1, 3}, {n2, 1}, {n3, 1}, {n5, 1} } };
+    v2 = { now, { {n1, 1}, {n2, 2}, {n4, 1} } };
+    BOOST_CHECK_EQUAL(e, v1.merge(v2, now));
+}
+
 BOOST_AUTO_TEST_SUITE_END()

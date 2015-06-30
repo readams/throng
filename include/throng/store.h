@@ -50,98 +50,29 @@ public:
      * @param key the key to retrieve
      * @return a vector of values
      */
-    virtual std::vector<versioned<V>> get(const K& key) const = 0;
+    virtual std::vector<versioned<V>> get(const K& key) = 0;
 
     /**
      * Put the given value into the store
      *
      * @param key the key to store
      * @param value the value to store
+     * @return true if the value was successfully written, or false if
+     * the new value is obsolete
      */
-    virtual void put(const K& key, const versioned<V>& value) = 0;
-
-    /**
-     * Delete the value associated with the key by writing a tombstone
-     * value into the store.  Deletes any values prior to the given
-     * version.
-     *
-     * @param key the key to delete
-     * @param version the current version to delete (obtained with
-     * get)
-     * @return true if anything was deleted
-     */
-    virtual bool deleteKey(const K& key, const vector_clock& version) = 0;
+    virtual bool put(const K& key, const versioned<V>& value) = 0;
 
     /**
      * Get the name for this store.
      *
      * @return the name for the store
      */
-    virtual const std::string& getName() const = 0;
+    virtual const std::string& get_name() const = 0;
 
     /**
      * Close the store
      */
     virtual void close() = 0;
-};
-
-/**
- * Store interface that maps from the internal binary string
- * representation to the external represenation
- */
-template <typename K, typename V,
-          class KeySerializer = serializer<K>,
-          class ValueSerializer = serializer<V>>
-class serializing_store : public store<K,V> {
-public:
-    /**
-     * Construct a new serializing store using the specified delegate
-     *
-     * @param delegate_ the underlying delegate store
-     */
-    serializing_store(store<std::string, std::string>& delegate_)
-        : delegate(delegate_) { }
-
-    virtual std::vector<versioned<V>> get(const K& key) const override {
-        std::vector<versioned<std::string>> vs =
-            delegate.get(key_ser.serialize(key));
-        std::vector<versioned<V>> result;
-        result.reserve(vs.size());
-        for (auto vv : vs) {
-            if (vv) {
-                result.emplace_back(value_ser.deserialize(vv.get_ptr()),
-                                    vv.get_version());
-            } else {
-                result.emplace_back(nullptr, vv.get_version());
-            }
-        }
-        return result;
-    }
-
-    virtual void put(const K& key, const versioned<V>& value) override {
-        delegate.put(key_ser.serialize(key),
-                     versioned<std::string>(value
-                                            ? value_ser.serialize(value.get_ptr())
-                                            : nullptr,
-                                            value.get_version()));
-    }
-
-    virtual bool deleteKey(const K& key, const vector_clock& version) override {
-        return delegate.deleteKey(key_ser.serialize(key), version);
-    };
-
-    virtual const std::string& getName() const override {
-        return delegate.getName();
-    };
-
-    virtual void close() override {
-        return delegate.close();
-    };
-
-private:
-    store<std::string, std::string>& delegate;
-    KeySerializer key_ser;
-    ValueSerializer value_ser;
 };
 
 } /* namespace throng */

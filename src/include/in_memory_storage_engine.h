@@ -24,6 +24,9 @@
 
 #include "storage_engine.h"
 
+#include <mutex>
+#include <unordered_map>
+
 namespace throng {
 namespace internal {
 
@@ -54,36 +57,17 @@ public:
      * @return a vector of values
      */
     virtual std::vector<versioned<std::string>>
-    get(const std::string& key) const override;
+    get(const std::string& key) override;
 
-    /**
-     * Put the given value into the store
-     *
-     * @param key the key to store
-     * @param value the value to store
-     */
-    virtual void put(const std::string& key,
+    virtual bool put(const std::string& key,
                      const versioned<std::string>& value) override;
-
-    /**
-     * Delete the value associated with the key by writing a tombstone
-     * value into the store.  Deletes any values prior to the given
-     * version.
-     *
-     * @param key the key to delete
-     * @param version the current version to delete (obtained with
-     * get)
-     * @return true if anything was deleted
-     */
-    virtual bool deleteKey(const std::string& key,
-                           const vector_clock& version) override;
 
     /**
      * Get the name for this store.
      *
      * @return the name for the store
      */
-    virtual const std::string& getName() const override;
+    virtual const std::string& get_name() const override;
 
     /**
      * Close the store
@@ -95,6 +79,13 @@ public:
     // **************
 private:
     std::string name;
+    std::mutex lock;
+
+    struct record {
+        std::vector<versioned_type> values;
+    };
+
+    std::unordered_map<std::string, record> records;
 };
 
 } /* namespace internal */

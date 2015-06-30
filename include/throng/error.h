@@ -84,11 +84,28 @@ class obsolete_version: public exception
 public:
     /**
      * Create a new exception with the provided message
-     *
-     * @param message The error message
      */
-   obsolete_version(const std::string& message) :
-        exception(message) { }
+   obsolete_version() :
+       exception("Obsolete write") { }
+};
+
+/**
+ * Thrown when an inconsistency resolver fails to reduce to a single
+ * element.
+ */
+class inconsistent_data: public exception
+{
+public:
+    /**
+     * Create a new exception with the provided message
+     *
+     * @param store_name The store name for the failed resolver
+     * @param elements the number of elements remaining
+     */
+    inconsistent_data(const std::string& store_name,
+                      size_t elements) :
+        exception("Inconsistent data for " + store_name +
+                  ": " + std::to_string(elements) + " remaining") { }
 };
 
 } /* namespace error */

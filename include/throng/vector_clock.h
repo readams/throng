@@ -65,7 +65,7 @@ public:
     /**
      * Default constructor
      */
-    vector_clock() {}
+    vector_clock();
 
     /**
      * Construct a vector_clock using the provided versions and
@@ -103,6 +103,16 @@ public:
 
     /**
      * Increment the vector clock entry for the node and return a copy
+     * of the clock with appropriate entry incremented.  The timestamp
+     * will be the current time.
+     *
+     * @param id the Node ID to increment
+     * @return the newly created vector clock
+     */
+    vector_clock incremented(const node_id& id) const;
+
+    /**
+     * Increment the vector clock entry for the node and return a copy
      * of the clock with appropriate entry incremented.
      *
      * @param id the Node ID to increment
@@ -112,13 +122,47 @@ public:
     vector_clock incremented(const node_id& id, time_point timestamp) const;
 
     /**
+     * Merge this clock with the provided clock and return a new clock
+     * with every entry set to the maximum version of either entry.
+     * The timestamp will be the current time
+     *
+     * @param o the clock to merge with
+     * @return a new clock
+     */
+    vector_clock merge(const vector_clock& o) const;
+
+    /**
+     * Merge this clock with the provided clock and return a new clock
+     * with every entry set to the maximum version of either entry.
+     *
+     * @param o the clock to merge with
+     * @param timestamp the new timestamp to use
+     * @return a new clock
+     */
+    vector_clock merge(const vector_clock& o, time_point timestamp) const;
+
+    /**
      * Return whether or not the given vector_clock preceeded this one,
      * succeeded it, or is concurrant with it
      *
-     * @param v The other vector_clock
+     * @param o The other vector_clock
      * @return one of the Occurred values
      */
-    occurred compare(const vector_clock& v) const;
+    occurred compare(const vector_clock& o) const;
+
+    /**
+     * Get the timestamp associated with this vector clock
+     *
+     * @return the timestamp
+     */
+    time_point get_timestamp() const { return timestamp; }
+
+    /**
+     * Get the clock entries for this vector clock
+     *
+     * @return the clock entries
+     */
+    const std::vector<clock_entry>& get_entries() const { return entries; }
 
 private:
     time_point timestamp;
@@ -130,24 +174,30 @@ private:
     friend bool operator!=(const vector_clock& l, const vector_clock& r);
 };
 
-
 /**
  * Stream insertion operator for a node ID.  Displays like "(1,2,3)"
  */
 std::ostream& operator<<(std::ostream& output, const node_id& id);
 
 /**
- * Stream insertion operator for vector:clock::occurred.  Prints the
+ * Stream insertion operator for vector_clock::occurred.  Prints the
  * constant name.
  */
 std::ostream& operator<<(std::ostream& output, vector_clock::occurred o);
 
 /**
- * Stream insertion operator for vector:clock_entry.
+ * Stream insertion operator for vector_clock::clock_entry.
  * Prints as (node_id, version)
  */
 std::ostream& operator<<(std::ostream& output,
                          const vector_clock::clock_entry& entry);
+
+/**
+ * Stream insertion operator for std::vector<vector_clock::clock_entry>
+ * Prints as [(node_id, version), ...]
+ */
+std::ostream& operator<<(std::ostream& output,
+                         const std::vector<vector_clock::clock_entry>& entries);
 
 /**
  * Stream insertion operator for vector_clock

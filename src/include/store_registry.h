@@ -60,11 +60,11 @@ public:
      * Get the storage engine for the store with the specified name
      *
      * @param name the name of the store to get
-     * @return a pointer to the storage engine.  This pointer will
+     * @return a reference to the storage engine.  This pointer will
      * live as long as the store registry.
      * @throws error::unknown_store if there is no such store
      */
-    storage_engine* get(const std::string& name);
+    storage_engine& get(const std::string& name);
 
 private:
     /**

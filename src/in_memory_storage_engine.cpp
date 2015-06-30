@@ -19,6 +19,8 @@
 
 #include "in_memory_storage_engine.h"
 
+#include <utility>
+
 namespace throng {
 namespace internal {
 
@@ -26,21 +28,45 @@ using std::vector;
 using std::string;
 
 vector<versioned<string>>
-in_memory_storage_engine::get(const string& key) const {
-    return {};
+in_memory_storage_engine::get(const string& key) {
+    std::lock_guard<std::mutex> guard(lock);
+    vector<versioned<string>> result;
+    auto it = records.find(key);
+    if (it == records.end()) return result;
+    for (auto& v : it->second.values) {
+        result.push_back(v);
+    }
+    return result;
 }
 
-void in_memory_storage_engine::put(const string& key,
+bool in_memory_storage_engine::put(const string& key,
                                    const versioned<string>& value) {
+    std::lock_guard<std::mutex> guard(lock);
 
+    record& rs = records[key];
+    std::vector<versioned_type> new_values;
+
+    for (auto vit = rs.values.begin(); vit != rs.values.end(); vit++) {
+        vector_clock::occurred o =
+            value.get_version().compare(vit->get_version());
+
+        switch (o) {
+        case vector_clock::occurred::BEFORE:
+        case vector_clock::occurred::EQUAL:
+            return false;
+        case vector_clock::occurred::AFTER:
+            break;
+        default:
+            new_values.push_back(*vit);
+            break;
+        }
+    }
+    new_values.push_back({ value });
+    rs.values.swap(new_values);
+    return true;
 }
 
-bool in_memory_storage_engine::deleteKey(const string& key,
-                                         const vector_clock& version) {
-    return false;
-}
-
-const string& in_memory_storage_engine::getName() const {
+const string& in_memory_storage_engine::get_name() const {
     return name;
 }
 
