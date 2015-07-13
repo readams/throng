@@ -1,14 +1,126 @@
 package throng.message;
 
+// ***************
+// Data structures
+// ***************
+
+// A node that can be contacted on the network
 message node {
     // topographical node ID
     repeated uint32 node_id = 1 [packed=true];
+
     // hostname or IP address
     optional string hostname = 2;
+
     // port number for contacting the node
     optional uint32 port = 3;
+
+    // whether the node is master-eligible
+    optional bool master_eligible = 4;
 }
 
-message cluster_config {
-    repeated node nodes = 1;
+// Provides configuration information for a k-neighborhood.
+message neighborhood {
+    // The neighborhood prefix.  Nodes in the k-neighborhood have node
+    // IDs with the same prefix.  The prefix for a k-neighborhood has
+    // length k.
+    repeated uint32 prefix = 1 [packed=true];
+
+    // k-master nodes for the k-neighborhood
+    repeated node masters = 2;
+
+    // Buckets assigned to this neighborhood.  This is a union of all
+    // buckets assigned to any node in the neighborhood.
+    repeated uint32 buckets = 3;
+}
+
+// A single entry in a vector clock
+message clock_entry {
+    repeated uint32 node_id = 1 [packed=true];
+    optional uint64 version = 2;
+}
+
+// A vector clock
+message vector_clock {
+    optional uint64 timestamp = 1;
+    repeated clock_entry entries = 2;
+}
+
+// A value paired with a version
+message versioned {
+    optional vector_clock version = 1;
+    optional bytes value = 2;
+}
+
+// A key paired with associated versioned data
+message keyed_values {
+    optional bytes key = 1;
+    repeated versioned values = 2;
+}
+
+// A key paired with associated versions
+message keyed_versions {
+    optional bytes key = 1;
+    repeated vector_clock versions = 2;
+}
+
+// *****************
+// RPC wire protocol
+// *****************
+
+// Handshake message request
+message req_hello {
+    repeated uint32 node_id = 1 [packed=true];
+    repeated neighborhood neighborhoods = 2;
+}
+// Handshake message reply
+message rep_hello {
+}
+
+// Get key from store request
+message req_get {
+    optional string store_name = 1;
+    optional bytes key = 2;
+}
+// Get key from store reply
+message rep_get {
+    optional bytes key = 1;
+    optional keyed_versions values = 2;
+}
+
+enum method {
+    METHOD_ECHO = 1;
+    METHOD_HELLO = 2;
+    METHOD_GET = 100;
+}
+
+enum status {
+    STATUS_OK = 1;
+    STATUS_ERROR = 2;
+    STATUS_UNSUPPORTED = 3;
+    STATUS_MALFORMED = 4;
+    STATUS_OVERFLOW = 5;
+}
+
+// an RPC request
+message rpc_req {
+    optional req_hello hello = 100;
+    optional req_get get = 101;
+}
+
+// an RPC reply
+message rpc_rep {
+    optional status status_code = 3;
+    optional string status_message = 4;
+
+    optional rep_hello hello = 100;
+    optional rep_get get = 101;
+}
+
+message rpc_message {
+    optional uint64 xid = 1;
+    optional method method = 2;
+
+    optional rpc_req req = 3;
+    optional rpc_rep rep = 4;
 }

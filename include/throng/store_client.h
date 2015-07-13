@@ -22,7 +22,6 @@
 #ifndef THRONG_STORE_CLIENT_H
 #define THRONG_STORE_CLIENT_H
 
-//#include "throng/inconsistency_resolver.h"
 #include "throng/ctx.h"
 #include "throng/error.h"
 
@@ -49,11 +48,10 @@ public:
      * An inconsistency resolver reduces a set of inconsistent data
      * values down to a single value.  A custom inconsistency resolver
      * can allow using commutative replicated data types such as sets,
-     * counters, etc.
+     * counters, etc.  Will never be called on an empty vector.
      */
-    typedef std::function<std::vector<versioned<V>>
-                          (std::vector<versioned<V>>&& items)>
-    resolver_type;
+    typedef std::function<versioned<V>
+                          (std::vector<versioned<V>>& items)> resolver_type;
 
     /**
      * A listener to get notifications for changes to keys in the
@@ -84,8 +82,8 @@ public:
      * Get a store client to access a store that has already been
      * registered locally.
      *
-     * Uses the default inconsistency resolver which uses uses the
-     * most recently-written concurrent data according to wall clock
+     * Uses the default inconsistency resolver which selects the most
+     * recently-written concurrent data according to wall clock
      * timestamp.
      *
      * @param context the throng context for the store
@@ -95,8 +93,7 @@ public:
     static std::unique_ptr<store_client<K, V, KS, VS>>
         new_store_client(ctx& context, const std::string& name) {
         auto def_resolver =
-        [](std::vector<versioned<V>>&& items) -> std::vector<versioned<V>> {
-            if (items.size() <= 1) return items;
+        [](std::vector<versioned<V>>& items) -> versioned<V> {
             auto& max = items.at(0);
             auto maxClock = max.get_version();
             auto maxTime = maxClock.get_timestamp();
@@ -109,9 +106,7 @@ public:
                 }
                 maxClock = maxClock.merge(clock, now);
             }
-            std::vector<versioned<V>> result;
-            result.emplace_back(max.get_ptr(), maxClock);
-            return result;
+            return versioned<V>(max.get_ptr(), maxClock);
         };
         return new_store_client(context, name, def_resolver);
     }
@@ -137,11 +132,7 @@ public:
                 result.emplace_back(nullptr, vv.get_version());
             }
         }
-
-        result = resolver(std::move(result));
-        if (result.size() == 1) return result.at(0);
-
-        throw error::inconsistent_data(get_name(), result.size());
+        return resolver(result);
     }
 
     /**
@@ -190,11 +181,16 @@ public:
     }
 
     /**
-     * Register a listener to get notifications of changes to keys in
+     * Add a listener to get notifications of changes to keys in
      * the store.
+     *
+     * @param listener the listener to add
      */
-    void register_listener(listener_type listener) {
-        // XXX TODO
+    void add_listener(listener_type listener) {
+        auto l = [listener, this](const std::string& key, bool local) {
+            listener(key_ser.deserialize(key), local);
+        };
+        context.add_raw_listener(delegate.get_name(), l);
     }
 
 private:

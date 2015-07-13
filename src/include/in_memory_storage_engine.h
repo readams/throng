@@ -22,7 +22,7 @@
 #ifndef THRONG_IN_MEMORY_STORAGE_ENGINE_H
 #define THRONG_IN_MEMORY_STORAGE_ENGINE_H
 
-#include "storage_engine.h"
+#include "throng/store.h"
 
 #include <mutex>
 #include <unordered_map>
@@ -34,7 +34,7 @@ namespace internal {
  * The in-memory storage engine implements a storage engine that
  * stores its data in-memory non-persistently.
  */
-class in_memory_storage_engine : public storage_engine {
+class in_memory_storage_engine : public store<std::string, std::string> {
 public:
     /**
      * Construct a new in-memory storage engine with the given name.
@@ -56,11 +56,11 @@ public:
      * @param key the key to retrieve
      * @return a vector of values
      */
-    virtual std::vector<versioned<std::string>>
+    virtual std::vector<versioned_type>
     get(const std::string& key) override;
 
     virtual bool put(const std::string& key,
-                     const versioned<std::string>& value) override;
+                     const versioned_type& value) override;
 
     /**
      * Get the name for this store.
@@ -69,14 +69,6 @@ public:
      */
     virtual const std::string& get_name() const override;
 
-    /**
-     * Close the store
-     */
-    virtual void close() override;
-
-    // **************
-    // storage_engine
-    // **************
 private:
     std::string name;
     std::mutex lock;

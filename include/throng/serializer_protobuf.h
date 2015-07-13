@@ -23,7 +23,8 @@
 #ifndef THRONG_PROTOBUF_SERIALIZER
 /**
  * Create a template specialization for a protocol buffers message to
- * allow storing it in throng store easily
+ * allow storing it in throng store easily.  Must be called from the
+ * global namespace, though it will not define any global symbols.
  */
 #define THRONG_PROTOBUF_SERIALIZER(_MessageLite)                        \
     namespace throng {                                                  \

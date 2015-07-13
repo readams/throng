@@ -16,6 +16,10 @@
  * permissions and limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "in_memory_storage_engine.h"
 
 #include <boost/test/unit_test.hpp>
@@ -29,7 +33,7 @@ using std::make_shared;
 
 BOOST_AUTO_TEST_CASE(basic) {
     in_memory_storage_engine e {"test"};
-
+    // XXX TODO
 }
 
 BOOST_AUTO_TEST_SUITE_END()

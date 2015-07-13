@@ -23,7 +23,8 @@
 #define THRONG_STORE_REGISTRY_H
 
 #include "throng/store_config.h"
-#include "in_memory_storage_engine.h"
+#include "processor.h"
+#include "ctx_internal.h"
 
 #include <boost/filesystem.hpp>
 #include <unordered_map>
@@ -41,17 +42,16 @@ public:
      * Create a new throng context instance with storage in the
      * specified db path.
      *
+     * @param ctx the internal context
      * @param db_path filesystem path for permanent storage.
      */
-    store_registry(const std::string db_path);
+    store_registry(ctx_internal& ctx, const std::string db_path);
 
     /**
      * Register a store with the registry.
      *
      * @param name the name of the store
-     * @param scope the scope for the store.
-     * @param persistent true if the data in the store should be
-     * stored on disk
+     * @param config the configuration for the store
      */
     void register_store(const std::string& name,
                         const store_config& config);
@@ -64,9 +64,24 @@ public:
      * live as long as the store registry.
      * @throws error::unknown_store if there is no such store
      */
-    storage_engine& get(const std::string& name);
+    processor& get(const std::string& name);
+
+    /**
+     * Start all store processors
+     */
+    void start();
+
+    /**
+     * Stop all store processors
+     */
+    void stop();
 
 private:
+    /**
+     * Internal context
+     */
+    ctx_internal& ctx;
+
     /**
      * Filesystem location for persistent data stores
      */
@@ -75,7 +90,8 @@ private:
     /**
      * Storage engines for local copies of the stores.
      */
-    std::unordered_map<std::string, std::unique_ptr<storage_engine>> stores;
+    std::unordered_map<std::string,
+                       std::unique_ptr<processor>> stores;
 };
 
 } /* namespace internal */

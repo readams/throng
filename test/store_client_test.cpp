@@ -16,6 +16,10 @@
  * permissions and limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "ctx_fixture.h"
 
 #include "throng/serializer_protobuf.h"
@@ -59,8 +63,7 @@ BOOST_FIXTURE_TEST_CASE(basic, throng::test::string_store_fixture) {
 
 BOOST_FIXTURE_TEST_CASE(inconsistency, throng::test::string_store_fixture) {
     auto union_resolver =
-        [](vector<versioned<string>>&& items) -> vector<versioned<string>> {
-        if (items.size() <= 1) return items;
+        [](vector<versioned<string>>& items) -> versioned<string> {
         std::set<char> chars;
         auto now = std::chrono::system_clock::now();
         throng::vector_clock maxClock { now, {} };
@@ -77,15 +80,14 @@ BOOST_FIXTURE_TEST_CASE(inconsistency, throng::test::string_store_fixture) {
         for (char c : chars) {
             str << c;
         }
-        result.emplace_back(make_shared<string>(str.str()),
-                            maxClock);
-        return result;
+        return versioned<string>(make_shared<string>(str.str()),
+                                 maxClock);
     };
 
     auto rclient =
         throng::store_client<string, string>::
-        new_store_client(context, "test", union_resolver);
-    auto& raw = context.get_raw_store("test");
+        new_store_client(*context, "test", union_resolver);
+    auto& raw = context->get_raw_store("test");
 
     node_id n1 = {1, 2, 3};
     node_id n2 = {1, 3, 2};
@@ -124,9 +126,8 @@ BOOST_FIXTURE_TEST_CASE(inconsistency, throng::test::string_store_fixture) {
 BOOST_FIXTURE_TEST_CASE(protobuf, throng::test::ctx_fixture) {
     using throng::message::node;
 
-    auto c1 = store_client<string, node>::new_store_client(context, "test");
+    auto c1 = store_client<string, node>::new_store_client(*context, "test");
 
-    auto v1 = c1->get("hello");
     node n;
     n.add_node_id(5);
     n.add_node_id(4);
@@ -134,6 +135,7 @@ BOOST_FIXTURE_TEST_CASE(protobuf, throng::test::ctx_fixture) {
     n.set_hostname("127.0.0.1");
     n.set_port(1234);
 
+    auto v1 = c1->get("hello");
     BOOST_CHECK(!v1);
     c1->update("hello", v1, n);
 

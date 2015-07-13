@@ -44,13 +44,18 @@ public:
     virtual ~store() {};
 
     /**
+     * The type of versioned value used by the store
+     */
+    typedef versioned<V> versioned_type;
+
+    /**
      * Get the set of values associated with a given key, or an empty
      * vector if there are no such values.
      *
      * @param key the key to retrieve
      * @return a vector of values
      */
-    virtual std::vector<versioned<V>> get(const K& key) = 0;
+    virtual std::vector<versioned_type> get(const K& key) = 0;
 
     /**
      * Put the given value into the store
@@ -60,7 +65,7 @@ public:
      * @return true if the value was successfully written, or false if
      * the new value is obsolete
      */
-    virtual bool put(const K& key, const versioned<V>& value) = 0;
+    virtual bool put(const K& key, const versioned_type& value) = 0;
 
     /**
      * Get the name for this store.
@@ -68,11 +73,6 @@ public:
      * @return the name for the store
      */
     virtual const std::string& get_name() const = 0;
-
-    /**
-     * Close the store
-     */
-    virtual void close() = 0;
 };
 
 } /* namespace throng */

@@ -17,7 +17,12 @@
  * permissions and limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "store_registry.h"
+#include "in_memory_storage_engine.h"
 #include "throng/error.h"
 
 namespace throng {
@@ -29,31 +34,47 @@ using std::unique_ptr;
 using boost::filesystem::path;
 using boost::filesystem::canonical;
 
-store_registry::store_registry(const string db_path_) {
+store_registry::store_registry(ctx_internal& ctx_, const string db_path_)
+    : ctx(ctx_) {
     boost::filesystem::create_directory(db_path_);
     db_path = canonical(db_path);
 }
 
 void store_registry::register_store(const std::string& name,
                                     const store_config& config) {
-    typedef std::unique_ptr<storage_engine> storage_engine_p;
+    typedef std::unique_ptr<store<std::string, std::string>> storage_engine_p;
+    typedef std::unique_ptr<processor> processor_p;
 
-    storage_engine_p underlying;
+    processor_p storage;
     if (config.persistent) {
         // XXX - TODO replace with persistent storage engine
-        underlying = storage_engine_p{ new in_memory_storage_engine(name) };
+        storage_engine_p delegate =
+            storage_engine_p{ new in_memory_storage_engine(name) };
+        storage = processor_p{ new processor(ctx, std::move(delegate), config) };
     } else {
-        underlying = storage_engine_p{ new in_memory_storage_engine(name) };
+        storage = processor_p{ new processor(ctx, name, config) };
     }
-    // XXX - TODO wrap with synchronizing storage engine
-    stores.emplace(name, std::move(underlying));
+
+    stores.emplace(name, std::move(storage));
 }
 
-storage_engine& store_registry::get(const std::string& name) {
+processor& store_registry::get(const std::string& name) {
     auto it = stores.find(name);
     if (it == stores.end())
         throw error::unknown_store(name);
     return *it->second.get();
+}
+
+void store_registry::start() {
+    for (auto& s : stores) {
+        s.second->start();
+    }
+}
+
+void store_registry::stop() {
+    for (auto& s : stores) {
+        s.second->stop();
+    }
 }
 
 } /* namespace internal */

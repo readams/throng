@@ -25,6 +25,8 @@
 #include "throng/ctx.h"
 #include "throng/store_client.h"
 
+#include "temp_path.h"
+
 namespace throng {
 namespace test {
 
@@ -34,15 +36,17 @@ namespace test {
 class ctx_fixture {
 public:
     ctx_fixture()
-        : context("/tmp/test") {
-        context.register_store("test");
-        context.start();
+        : context(ctx::new_ctx(storage.path().string())) {
+        context->configure_local({1}, "localhost", 17171);
+        context->register_store("test");
+        context->start();
     }
     virtual ~ctx_fixture() {
-        context.stop();
+        context->stop();
     }
 
-    ctx context;
+    temp_dir storage;
+    std::unique_ptr<ctx> context;
 };
 
 /**
@@ -52,7 +56,7 @@ class string_store_fixture : public ctx_fixture {
 public:
     string_store_fixture()
         : client(throng::store_client<std::string, std::string>::
-                 new_store_client(context, "test")) {
+                 new_store_client(*context, "test")) {
     }
 
     virtual ~string_store_fixture() {

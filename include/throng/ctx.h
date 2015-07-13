@@ -41,19 +41,34 @@ public:
      * specified db path.
      *
      * @param db_path filesystem path for permanent storage.
+     * @return a newly-allocated pointer
      */
-    ctx(const std::string db_path);
-    ~ctx();
+    static std::unique_ptr<ctx> new_ctx(const std::string db_path);
+
+    virtual ~ctx() {}
 
     /**
-     * Start the throng instance and connect to the cluster
+     * Set the configuration for the local node.
+     *
+     * @param node_id the node ID for the local node
+     * @param hostname the hostname or IP address for contacting this
+     * node from the other nodes
+     * @param port the port number to use for contacting this node
+     * from other nodes.
+     * @param master_eligible true if this node can act as a
+     * neighborhood master
      */
-    void start();
+    virtual void configure_local(node_id node_id,
+                                 std::string hostname, uint16_t port,
+                                 bool master_eligible = true) = 0;
 
     /**
-     * Stop the throng context instance
+     * Add a seed for connecting to the cluster
+     *
+     * @param hostname the hostname or IP address
+     * @param port the port number
      */
-    void stop();
+    virtual void add_seed(std::string hostname, uint16_t port) = 0;
 
     /**
      * Register a store with the specified name and default
@@ -63,7 +78,7 @@ public:
      * @param name the name for the store
      * @see register_store(const std::string&, const store_config&)
      */
-    void register_store(const std::string& name);
+    virtual void register_store(const std::string& name) = 0;
 
     /**
      * Register a store with the specified name and configuration.
@@ -72,8 +87,47 @@ public:
      * @param name the name for the store
      * @param config the configuration to use for the store.
      */
-    void register_store(const std::string& name,
-                        const store_config& config);
+    virtual void register_store(const std::string& name,
+                                const store_config& config) = 0;
+
+    /**
+     * Start the throng instance and connect to the cluster
+     *
+     * @param worker_pool_size the number of IO service worker threads
+     * to create
+     */
+    virtual void start(size_t worker_pool_size = 3) = 0;
+
+    /**
+     * Stop the throng context instance
+     */
+    virtual void stop() = 0;
+
+    /**
+     * Get the node ID for the local node
+     */
+    virtual node_id get_local_node_id() = 0;
+
+    /**
+     * A listener to get notifications for changes to keys in the
+     * store.  It takes arguments of the changed key, and a bool that
+     * indicates that the change notification occurred because of a
+     * local write to the store.
+     */
+    typedef std::function<void(const std::string& key, bool local)>
+    raw_listener_type;
+
+    /**
+     * Register a listener to get raw notifications for the specified
+     * store.  Note that this is almost never what you want.  Instead,
+     * create a store_client and register your listener to get
+     * typesafe notifications.
+     *
+     * @param store_name the store on which to register the listener
+     * @param listener the listener to register.
+     */
+    virtual void add_raw_listener(const std::string& store_name,
+                                  raw_listener_type listener) = 0;
 
     /**
      * Get a raw reference to the underlying store.  Note that this is
@@ -83,18 +137,8 @@ public:
      * @param name the name of the store
      * @return a reference to the raw store
      */
-    store<std::string,std::string>& get_raw_store(const std::string& name);
-
-    /**
-     * Get the node ID for the local node
-     */
-    node_id get_local_node_id() const;
-
-private:
-
-    class ctx_impl;
-    std::unique_ptr<ctx_impl> pimpl;
-    friend class ctx_impl;
+    virtual store<std::string,std::string>&
+    get_raw_store(const std::string& name) = 0;
 };
 
 } /* namespace throng */

@@ -22,6 +22,8 @@
 #ifndef THRONG_STORE_CONFIG_H
 #define THRONG_STORE_CONFIG_H
 
+#include <chrono>
+
 namespace throng {
 
 /**
@@ -29,9 +31,33 @@ namespace throng {
  */
 struct store_config {
     /**
-     * Set to true to enable persistence for this store
+     * Set to true to enable persistence for this store.  False means
+     * data is stored only in memory.
      */
     bool persistent = false;
+
+    /**
+     * The number of replicas for objects written to this store
+     */
+    uint8_t rep_factor = 3;
+
+    /**
+     * The timeout for an object that has not been updated for some
+     * period of time.  This is useful for objects that might be
+     * written to a store but correspond to stale state.  Data written
+     * by the local node is automatically refreshed.
+     */
+    std::chrono::seconds object_timeout = std::chrono::seconds::zero();
+
+    /**
+     * The timeout before removing a tombstone corresponding to a
+     * deleted object.  This timeout represents the maximum amount of
+     * time a network partition can be tolerated before there is a
+     * possibility that deleted objects could be "resurrected" by a
+     * healing of the partition.
+     */
+    std::chrono::seconds tombstone_timeout = std::chrono::hours(24);
+
 };
 
 } /* namespace throng */

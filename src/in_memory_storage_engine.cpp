@@ -17,6 +17,10 @@
  * permissions and limitations under the License.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "in_memory_storage_engine.h"
 
 #include <utility>
@@ -68,10 +72,6 @@ bool in_memory_storage_engine::put(const string& key,
 
 const string& in_memory_storage_engine::get_name() const {
     return name;
-}
-
-void in_memory_storage_engine::close() {
-
 }
 
 } /* namespace internal */

@@ -45,8 +45,14 @@ BUILT_SOURCES = $(protobuf_sources) $(protobuf_headers)
 MOSTLYCLEANFILES = $(BUILT_SOURCES)
 
 noinst_HEADERS = \
-	src/include/storage_engine.h \
-	src/include/in_memory_storage_engine.h\
+	src/include/ctx_internal.h \
+	src/include/store_registry.h \
+	src/include/in_memory_storage_engine.h \
+	src/include/processor.h \
+	src/include/rpc_service.h \
+	src/include/rpc_connection.h \
+	src/include/rpc_handler.h \
+	src/include/rpc_handler_node.h \
 	$(protobuf_headers)
 
 lib_LTLIBRARIES = libthrong.la
@@ -62,7 +68,12 @@ libthrong_la_SOURCES = \
 	src/ctx.cpp \
 	src/vector_clock.cpp \
 	src/store_registry.cpp \
-	src/in_memory_storage_engine.cpp
+	src/in_memory_storage_engine.cpp \
+	src/processor.cpp \
+	src/rpc_service.cpp \
+	src/rpc_handler.cpp \
+	src/rpc_handler_node.cpp \
+	src/rpc_connection.cpp
 
 libthrong_la_LIBADD = $(dependency_libs)
 TESTS = throng_test
