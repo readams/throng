@@ -32,7 +32,7 @@ class rpc_connection;
 /**
  * Handles RPC messages for a node instance
  */
- class rpc_handler_node : public rpc_handler {
+class rpc_handler_node : public rpc_handler {
 public:
     /**
      * Create a new RPC handler
@@ -54,6 +54,9 @@ public:
     virtual void handle_req_get(rpc_connection& connection,
                                 uint64_t xid,
                                 const message::req_get& message) override;
+
+private:
+    internal::logger lgr = LOGGER("rpc_handler_node");
 };
 
 } /* namespace internal */

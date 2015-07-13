@@ -23,6 +23,7 @@
 #define THRONG_RPC_SERVICE_H
 
 #include "ctx_internal.h"
+#include "logger.h"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
@@ -79,6 +80,7 @@ public:
     void set_seeds(std::vector<seed_type> seeds_) { seeds = std::move(seeds_); }
 
 private:
+    internal::logger lgr = LOGGER("rpc_service");
     ctx_internal& ctx;
     handler_factory_type& handler_factory;
     std::vector<seed_type> seeds;

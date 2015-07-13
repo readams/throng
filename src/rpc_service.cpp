@@ -65,8 +65,7 @@ rpc_service::rpc_connection_p rpc_service::new_conn() {
 void rpc_service::bootstrap() {
     if (seed_iter == seeds.end()) {
         if (seeds.size() > 0) {
-            std::cerr << "Could not connect to any seed for bootstrapping"
-                      << std::endl;
+            LOG(ERROR) << "Could not connect to any seed for bootstrapping";
         }
         return;
     }

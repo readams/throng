@@ -22,6 +22,7 @@
 #endif
 
 #include "ctx_internal.h"
+#include "logger.h"
 #include "throng/store_client.h"
 #include "throng/serializer_protobuf.h"
 #include "throng_messages.pb.h"
@@ -92,6 +93,7 @@ public:
 private:
     internal::store_registry registry;
 
+    internal::logger lgr = LOGGER("ctx");
     volatile bool running = false;
     io_service io;
     unique_ptr<io_service::work> work;
@@ -169,6 +171,8 @@ void ctx_impl::start(size_t worker_pool_size) {
     if (running) return;
     running = true;
 
+    LOG(INFO) << "Starting distributed policy engine";
+
     work.reset(new io_service::work(io));
 
     for (size_t i = 0; i < worker_pool_size; i++) {
@@ -177,11 +181,11 @@ void ctx_impl::start(size_t worker_pool_size) {
                     try {
                         io.run();
                     } catch (const std::exception& e) {
-                        std::cerr << "Error processing I/O: "
-                                  << e.what() << std::endl;
+                        LOG(ERROR) << "Error processing I/O: "
+                                   << e.what();
                     } catch (...) {
-                        std::cerr << "Unknown error processing I/O "
-                                  << std::endl;
+                        LOG(ERROR) << "Unknown error processing I/O "
+                                   << std::endl;
                     }
                 }
             });
@@ -210,6 +214,8 @@ void ctx_impl::start(size_t worker_pool_size) {
 void ctx_impl::stop() {
     if (!running) return;
     running = false;
+
+    LOG(INFO) << "Stopping distributed policy engine";
 
     rpc.stop();
     work.reset();

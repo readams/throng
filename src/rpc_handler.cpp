@@ -92,10 +92,9 @@ void rpc_handler::handle_error(rpc_connection& connection,
                                message::method method,
                                message::status status_code,
                                const std::string& status_message) {
-    // XXX TODO log error
-    std::cerr << "Error for " << message::method_Name(method)
-              << ": " << message::status_Name(status_code)
-              << ": " << status_message << std::endl;
+    LOG(ERROR) << "Error for " << message::method_Name(method)
+               << ": " << message::status_Name(status_code)
+               << ": " << status_message;
 }
 
 bool rpc_handler::handle_req_hello(rpc_connection& connection,
@@ -105,7 +104,7 @@ bool rpc_handler::handle_req_hello(rpc_connection& connection,
     for (auto id : message.node_id())
         remote_node_id.push_back(id);
 
-    std::cerr << "Got remote node ID: " << remote_node_id << std::endl;
+    LOG(INFO) << "Got remote node ID: " << remote_node_id;
 
     return true;
 }
@@ -113,7 +112,7 @@ bool rpc_handler::handle_req_hello(rpc_connection& connection,
 bool rpc_handler::handle_rep_hello(rpc_connection& connection,
                                    uint64_t xid,
                                    const message::rep_hello& message) {
-    std::cerr << "Hello succeeded" << std::endl;
+    LOG(INFO) << "Hello succeeded";
     return true;
 }
 

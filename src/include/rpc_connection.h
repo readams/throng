@@ -24,6 +24,7 @@
 
 #include "ctx_internal.h"
 #include "rpc_handler.h"
+#include "logger.h"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
@@ -122,6 +123,7 @@ public:
                             const std::string& status_message);
 
 private:
+    internal::logger lgr = LOGGER("rpc_connection");
     ctx_internal& ctx;
     uint64_t conn_id;
     std::shared_ptr<rpc_handler> handler;

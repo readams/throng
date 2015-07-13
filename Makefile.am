@@ -45,6 +45,7 @@ BUILT_SOURCES = $(protobuf_sources) $(protobuf_headers)
 MOSTLYCLEANFILES = $(BUILT_SOURCES)
 
 noinst_HEADERS = \
+	src/include/logger.h \
 	src/include/ctx_internal.h \
 	src/include/store_registry.h \
 	src/include/in_memory_storage_engine.h \
@@ -65,6 +66,7 @@ dependency_libs = $(protobuf_LIBS) $(leveldb_LIBS) \
 	$(BOOST_ASIO_LIB) \
 	$(BOOST_RANDOM_LIB)
 libthrong_la_SOURCES = \
+	src/logger.cpp \
 	src/ctx.cpp \
 	src/vector_clock.cpp \
 	src/store_registry.cpp \

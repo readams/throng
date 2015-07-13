@@ -23,6 +23,7 @@
 #define THRONG_RPC_HANDLER_H
 
 #include "ctx_internal.h"
+#include "logger.h"
 #include "throng_messages.pb.h"
 
 namespace throng {
@@ -181,6 +182,7 @@ public:
 
 
 private:
+    internal::logger lgr = LOGGER("rpc_handler");
     ctx_internal& ctx;
 
     node_id remote_node_id;

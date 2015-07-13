@@ -63,10 +63,9 @@ void rpc_connection::start(std::string hostname, uint16_t port) {
     remote_hostname = std::move(hostname);
     remote_port = port;
 
-    std::cerr << ctx.get_local_node_id()
+    LOG(INFO) << ctx.get_local_node_id()
               << " Connecting to: "
-              << remote_hostname << ":" << remote_port
-              << std::endl;
+              << remote_hostname << ":" << remote_port;
 
     auto self = shared_from_this();
     auto handle_connect =
@@ -74,22 +73,19 @@ void rpc_connection::start(std::string hostname, uint16_t port) {
                      ba::ip::tcp::resolver::iterator it) {
         if (ec) {
             if (ec != ba::error::operation_aborted) {
-                // TODO log error
-                std::cerr << ctx.get_local_node_id()
-                          << " Failed to connect to "
-                          << remote_hostname << ":" << remote_port
-                          << ": " << ec.message()
-                          << std::endl;
+                LOG(ERROR) << ctx.get_local_node_id()
+                           << " Failed to connect to "
+                           << remote_hostname << ":" << remote_port
+                           << ": " << ec.message();
                 if (it == ba::ip::tcp::resolver::iterator()) {
-                    std::cerr << "Fatal connection error" << std::endl;
+                    LOG(ERROR) << "Fatal connection error";
                     stop();
                 }
             }
         } else {
-            std::cerr << ctx.get_local_node_id()
+            LOG(INFO) << ctx.get_local_node_id()
                       << " Connected to "
-                      << remote_hostname << ":" << remote_port
-                      << std::endl;
+                      << remote_hostname << ":" << remote_port;
             handler->handle_connect(*this);
             read_message();
         }
@@ -99,12 +95,10 @@ void rpc_connection::start(std::string hostname, uint16_t port) {
                                      ba::ip::tcp::resolver::iterator it) {
         if (ec) {
             if (ec != ba::error::operation_aborted) {
-                // TODO log error
-                std::cerr << ctx.get_local_node_id()
-                          << " Failed to resolve " << remote_hostname
-                          << ":" << remote_port
-                          << ": " << ec.message()
-                          << std::endl;
+                LOG(ERROR) << ctx.get_local_node_id()
+                           << " Failed to resolve " << remote_hostname
+                           << ":" << remote_port
+                           << ": " << ec.message();
                 stop();
             }
             return;
@@ -137,10 +131,9 @@ void rpc_connection::start() {
     // XXX TODO start timeout timer
     auto self = shared_from_this();
     strand.dispatch([self, this]() {
-            std::cerr << ctx.get_local_node_id()
+            LOG(INFO) << ctx.get_local_node_id()
                       << " New remote connection from "
-                      << socket.remote_endpoint()
-                      << std::endl;
+                      << socket.remote_endpoint();
 
             handler->handle_connect(*this);
             read_message();
@@ -151,8 +144,8 @@ void rpc_connection::stop() {
     // XXX TODO stop timeout timer
     auto self = shared_from_this();
     strand.dispatch([self, this]() {
-            std::cerr << ctx.get_local_node_id()
-                      << " Closing connection " << get_conn_id() << std::endl;
+            LOG(INFO) << ctx.get_local_node_id()
+                      << " Closing connection " << get_conn_id();
             socket.close();
             stop_handler(self);
         });
@@ -199,9 +192,9 @@ void rpc_connection::read_message() {
     auto handle_size = [self, this](const error_code& ec, size_t len) {
         if (ec) {
             if (ec != ba::error::operation_aborted) {
-                std::cerr << ctx.get_local_node_id()
+                LOG(ERROR) << ctx.get_local_node_id()
                           << " Could not read from socket: "
-                          << ec.message() << std::endl;
+                          << ec.message();
                 stop();
             }
             return;
@@ -209,9 +202,8 @@ void rpc_connection::read_message() {
 
         size_t msg_len = ntohl(*(uint32_t*)(&buffer[0]));
         if (len > 1024*1024*64) {
-            // XXX log overflow error
-            std::cerr << ctx.get_local_node_id()
-                      << " Invalid message length: " << msg_len << std::endl;
+            LOG(ERROR) << ctx.get_local_node_id()
+                       << " Invalid message length: " << msg_len;
             stop();
             return;
         }
@@ -220,9 +212,9 @@ void rpc_connection::read_message() {
         auto handle_body = [self, this](const error_code& ec, size_t len) {
             if (ec) {
                 if (ec != ba::error::operation_aborted) {
-                    std::cerr << ctx.get_local_node_id()
-                              << " Could not read from socket: "
-                              << ec.message() << std::endl;
+                    LOG(ERROR) << ctx.get_local_node_id()
+                               << " Could not read from socket: "
+                               << ec.message();
                     stop();
                 }
                 return;
