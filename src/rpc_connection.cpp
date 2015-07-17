@@ -22,6 +22,7 @@
 #endif
 
 #include "rpc_connection.h"
+#include "logger.h"
 
 #include "throng_messages.pb.h"
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
@@ -48,6 +49,8 @@ using ba::io_service;
 using ba::steady_timer;
 using ba::ip::address;
 
+LOGGER("rpc");
+
 rpc_connection::rpc_connection(ctx_internal& ctx_,
                                uint64_t conn_id_,
                                std::shared_ptr<rpc_handler> handler_,
@@ -55,7 +58,7 @@ rpc_connection::rpc_connection(ctx_internal& ctx_,
     ctx(ctx_), conn_id(conn_id_), handler(std::move(handler_)),
     stop_handler(std::move(stop_handler_)),
     strand(ctx.get_io_service()), socket(ctx.get_io_service()),
-    resolver(ctx.get_io_service()) {
+    resolver(ctx.get_io_service()), next_xid(0) {
 
 }
 

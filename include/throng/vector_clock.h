@@ -37,7 +37,7 @@ namespace throng {
  * arranged such that failures are less correlated when the shared
  * prefix is shorter.
  */
-typedef std::vector<uint32_t> node_id;
+using node_id = std::vector<uint32_t>;
 
 /**
  * A vector clock represents a version in the database, and allows us
@@ -214,5 +214,26 @@ bool operator==(const vector_clock& l, const vector_clock& r);
 bool operator!=(const vector_clock& l, const vector_clock& r);
 
 } /* namespace throng */
+
+namespace std {
+
+/**
+ * Specialization for node ID hash
+ */
+template <>
+struct hash<throng::node_id> {
+    /**
+     * Compute a hash for the node ID
+     */
+    size_t operator ()(throng::node_id value) const {
+        size_t seed = 0;
+        std::hash<throng::node_id::value_type> hasher;
+        for (auto n : value)
+            seed ^= hasher(n) + 0x9e3779b9 + (seed<<6) + (seed>>2);
+        return seed;
+    }
+};
+
+}
 
 #endif /* THRONG_VECTOR_CLOCK_H */

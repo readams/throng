@@ -23,9 +23,12 @@
 
 #include "rpc_handler.h"
 #include "rpc_connection.h"
+#include "logger.h"
 
 namespace throng {
 namespace internal {
+
+LOGGER("rpc");
 
 rpc_handler::rpc_handler(ctx_internal& ctx_)
     : ctx(ctx_) {
@@ -75,10 +78,22 @@ bool rpc_handler::handle_connect(rpc_connection& connection) {
     message::rpc_message message;
     message.set_method(message::METHOD_HELLO);
     auto req = message.mutable_req()->mutable_hello();
+    auto nid = req->mutable_id();
     for (auto id : ctx.get_local_node_id())
-        req->add_node_id(id);
+        nid->add_id(id);
     connection.send_message(message);
     return true;
+}
+
+bool rpc_handler::handle_ready(rpc_connection& connection) {
+    state = conn_state::READY;
+    for (auto& l : ready_listeners)
+        l(connection.shared_from_this());
+    return true;
+}
+
+void rpc_handler::add_ready_listener(ready_listener_type listener) {
+    ready_listeners.push_back(std::move(listener));
 }
 
 void rpc_handler::handle_unsupported(rpc_connection& connection,
@@ -92,7 +107,7 @@ void rpc_handler::handle_error(rpc_connection& connection,
                                message::method method,
                                message::status status_code,
                                const std::string& status_message) {
-    LOG(ERROR) << "Error for " << message::method_Name(method)
+    LOG(ERROR) << HTAG << "Error for " << message::method_Name(method)
                << ": " << message::status_Name(status_code)
                << ": " << status_message;
 }
@@ -101,10 +116,10 @@ bool rpc_handler::handle_req_hello(rpc_connection& connection,
                                    uint64_t xid,
                                    const message::req_hello& message) {
     remote_node_id.clear();
-    for (auto id : message.node_id())
-        remote_node_id.push_back(id);
+    if (!message.has_id()) return true;
 
-    LOG(INFO) << "Got remote node ID: " << remote_node_id;
+    for (auto id : message.id().id())
+        remote_node_id.push_back(id);
 
     return true;
 }
@@ -112,7 +127,6 @@ bool rpc_handler::handle_req_hello(rpc_connection& connection,
 bool rpc_handler::handle_rep_hello(rpc_connection& connection,
                                    uint64_t xid,
                                    const message::rep_hello& message) {
-    LOG(INFO) << "Hello succeeded";
     return true;
 }
 

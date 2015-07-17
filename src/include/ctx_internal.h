@@ -30,6 +30,7 @@ namespace throng {
 namespace internal {
 
 class rpc_service;
+class cluster_config;
 
 /**
  * Provides access to library-wide services for internal objects
@@ -63,6 +64,13 @@ public:
      * @return the hostname and port number for the local node
      */
     virtual seed_type& get_local_seed() = 0;
+
+    /**
+     * Get the current cluster configuration
+     *
+     * @return a shared pointer to the current cluster configuration
+     */
+    virtual std::shared_ptr<cluster_config> get_cluster_config() = 0;
 };
 
 } /* namespace internal */

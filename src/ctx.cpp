@@ -22,6 +22,7 @@
 #endif
 
 #include "ctx_internal.h"
+#include "cluster_config.h"
 #include "logger.h"
 #include "throng/store_client.h"
 #include "throng/serializer_protobuf.h"
@@ -48,9 +49,12 @@ using std::vector;
 using std::unique_ptr;
 using std::pair;
 using std::make_shared;
+using std::shared_ptr;
 using boost::asio::io_service;
 using throng::message::node;
 using throng::message::neighborhood;
+
+LOGGER("core");
 
 static const string NODE_STORE = "__sys_node_store";
 static const string NEIGH_STORE = "__sys_neigh_store";
@@ -89,11 +93,10 @@ public:
     virtual boost::asio::io_service& get_io_service() override;
     virtual rpc_service& get_rpc_service() override;
     virtual seed_type& get_local_seed() override;
+    virtual std::shared_ptr<cluster_config> get_cluster_config() override;
 
 private:
     internal::store_registry registry;
-
-    internal::logger lgr = LOGGER("ctx");
     volatile bool running = false;
     io_service io;
     unique_ptr<io_service::work> work;
@@ -106,6 +109,8 @@ private:
     unique_ptr<neigh_client_t> neigh_client;
 
     std::mutex config_mutex;
+    shared_ptr<cluster_config> config;
+
     node_id local_node_id;
     rpc_service::seed_type local_seed;
     bool master_eligible = true;
@@ -150,7 +155,13 @@ void ctx_impl::configure_local(node_id node_id, string hostname, uint16_t port,
 }
 
 rpc_service::seed_type& ctx_impl::get_local_seed() {
+    std::unique_lock<std::mutex> guard(config_mutex);
     return local_seed;
+}
+
+std::shared_ptr<cluster_config> ctx_impl::get_cluster_config() {
+    std::unique_lock<std::mutex> guard(config_mutex);
+    return config;
 }
 
 void ctx_impl::add_seed(std::string hostname, uint16_t port) {
@@ -181,11 +192,10 @@ void ctx_impl::start(size_t worker_pool_size) {
                     try {
                         io.run();
                     } catch (const std::exception& e) {
-                        LOG(ERROR) << "Error processing I/O: "
+                        LOG(ERROR) << "Exception while processing I/O: "
                                    << e.what();
                     } catch (...) {
-                        LOG(ERROR) << "Unknown error processing I/O "
-                                   << std::endl;
+                        LOG(ERROR) << "Unknown error while processing I/O";
                     }
                 }
             });

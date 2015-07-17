@@ -54,9 +54,6 @@ public:
     virtual void handle_req_get(rpc_connection& connection,
                                 uint64_t xid,
                                 const message::req_get& message) override;
-
-private:
-    internal::logger lgr = LOGGER("rpc_handler_node");
 };
 
 } /* namespace internal */

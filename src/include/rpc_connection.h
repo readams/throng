@@ -24,7 +24,6 @@
 
 #include "ctx_internal.h"
 #include "rpc_handler.h"
-#include "logger.h"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
@@ -61,6 +60,8 @@ public:
                    uint64_t conn_id,
                    std::shared_ptr<rpc_handler> handler,
                    stop_handler_type stop_handler = stop_handler_type());
+    rpc_connection(const rpc_connection&) = delete;
+    rpc_connection& operator=(const rpc_connection&) = delete;
 
     /**
      * Get the socket for this connection
@@ -123,7 +124,6 @@ public:
                             const std::string& status_message);
 
 private:
-    internal::logger lgr = LOGGER("rpc_connection");
     ctx_internal& ctx;
     uint64_t conn_id;
     std::shared_ptr<rpc_handler> handler;
@@ -147,6 +147,8 @@ private:
 
     void read_message();
 };
+
+typedef std::shared_ptr<rpc_connection> rpc_connection_p;
 
 } /* namespace internal */
 } /* namespace throng */

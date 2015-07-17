@@ -39,7 +39,7 @@ const std::string logger::log_level_str[] =
 class log_sink_ostream : public log_sink {
 public:
     log_sink_ostream(std::ostream& out_) : out(out_) { }
-    virtual void log(log_level level,
+    virtual void log(logger::log_level level,
                      const std::string& topic,
                      char const* file,
                      int const line,
@@ -53,7 +53,7 @@ public:
             << std::endl;
     }
     virtual bool should_log(const std::string& topic,
-                            log_level level) override {
+                            logger::log_level level) override {
         return true;
     }
 

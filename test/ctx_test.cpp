@@ -20,7 +20,11 @@
 #include "config.h"
 #endif
 
-#include "throng/ctx.h"
+#include "test_util.h"
+#include "logger.h"
+
+#include "ctx_internal.h"
+#include "rpc_service.h"
 #include "temp_path.h"
 
 #include <boost/test/unit_test.hpp>
@@ -31,43 +35,55 @@
 #include <vector>
 
 using std::string;
+using std::vector;
 using std::unique_ptr;
 using namespace throng;
+
+LOGGER("test.ctx");
 
 BOOST_AUTO_TEST_SUITE(ctx_test)
 
 BOOST_AUTO_TEST_CASE(connect) {
     throng::test::temp_dir storage;
-    auto c1 = ctx::new_ctx((storage.path() / "n1").string());
-    auto c2 = ctx::new_ctx((storage.path() / "n2").string());
-    auto c3 = ctx::new_ctx((storage.path() / "n3").string());
-    auto c4 = ctx::new_ctx((storage.path() / "n4").string());
 
-    c1->register_store("test");
-    c2->register_store("test");
-    c3->register_store("test");
-    c4->register_store("test");
+    std::vector<node_id> nids { {1,1}, {1,2}, {2,1}, {2,2} };
+    std::vector<std::unique_ptr<ctx>> ctxs;
 
-    c1->configure_local({1,1}, "127.0.0.1", 17171);
-    c2->configure_local({1,2}, "127.0.0.1", 17172);
-    c3->configure_local({2,1}, "127.0.0.1", 17173);
-    c4->configure_local({2,2}, "127.0.0.1", 17174);
+    ctxs.push_back(ctx::new_ctx((storage.path() / "n1").string()));
+    ctxs.push_back(ctx::new_ctx((storage.path() / "n2").string()));
+    ctxs.push_back(ctx::new_ctx((storage.path() / "n3").string()));
+    ctxs.push_back(ctx::new_ctx((storage.path() / "n4").string()));
 
-    c2->add_seed("127.0.0.1", 17171);
-    c3->add_seed("127.0.0.1", 17171);
-    c4->add_seed("127.0.0.1", 17171);
+    for (auto& c : ctxs)
+        c->register_store("test");
 
-    c1->start();
-    c2->start();
-    c3->start();
-    c4->start();
+    ctxs[0]->configure_local(nids[0], "127.0.0.1", 17171);
+    ctxs[1]->configure_local(nids[1], "127.0.0.1", 17172);
+    ctxs[2]->configure_local(nids[2], "127.0.0.1", 17173);
+    ctxs[3]->configure_local(nids[3], "127.0.0.1", 17174);
 
-    sleep(1);
+    ctxs[1]->add_seed("127.0.0.1", 17171);
+    ctxs[2]->add_seed("127.0.0.1", 17171);
+    ctxs[3]->add_seed("127.0.0.1", 17171);
 
-    c1->stop();
-    c2->stop();
-    c3->stop();
-    c4->stop();
+    for (auto& c : ctxs)
+        c->start();
+
+    auto check_ready = [&]() -> bool {
+        for (auto& nid : nids) {
+            if (nid == ctxs[0]->get_local_node_id()) continue;
+            if (!dynamic_cast<internal::ctx_internal*>(ctxs[0].get())
+                ->get_rpc_service().is_ready(nid)) {
+                LOG(ERROR) << nid;
+                return false;
+            }
+        }
+        return true;
+    };
+    WAIT_FOR(check_ready(), 100);
+
+    for (auto& c : ctxs)
+        c->stop();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

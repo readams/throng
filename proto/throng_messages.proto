@@ -4,10 +4,15 @@ package throng.message;
 // Data structures
 // ***************
 
+// topographical node ID
+message node_id {
+    repeated uint32 id = 1 [packed=true];
+}
+
 // A node that can be contacted on the network
 message node {
-    // topographical node ID
-    repeated uint32 node_id = 1 [packed=true];
+    // The node ID
+    optional node_id id = 1;
 
     // hostname or IP address
     optional string hostname = 2;
@@ -19,24 +24,38 @@ message node {
     optional bool master_eligible = 4;
 }
 
+// A storage bucket
+message bucket {
+    // The scope for the bucket.  Buckets of scope k will store
+    // values for stores with scope k.
+    optional uint32 scope = 1;
+
+    // Replica number for this bucket.  If there are three replicas
+    // for a bucket, then there will be buckets with replica_num set
+    // to each of 0, 1, and 2 on 3 different nodes within the scope.
+    optional uint32 id = 2;
+
+    // The ID of the bucket to which data will be hashed
+    optional uint32 replica_num = 3;
+}
+
 // Provides configuration information for a k-neighborhood.
 message neighborhood {
     // The neighborhood prefix.  Nodes in the k-neighborhood have node
     // IDs with the same prefix.  The prefix for a k-neighborhood has
     // length k.
-    repeated uint32 prefix = 1 [packed=true];
+    optional node_id prefix = 1;
 
     // k-master nodes for the k-neighborhood
-    repeated node masters = 2;
+    repeated node_id masters = 2;
 
-    // Buckets assigned to this neighborhood.  This is a union of all
-    // buckets assigned to any node in the neighborhood.
-    repeated uint32 buckets = 3;
+    // Buckets assigned to this neighborhood.
+    repeated bucket buckets = 3;
 }
 
 // A single entry in a vector clock
 message clock_entry {
-    repeated uint32 node_id = 1 [packed=true];
+    optional node_id id = 1;
     optional uint64 version = 2;
 }
 
@@ -68,21 +87,34 @@ message keyed_versions {
 // RPC wire protocol
 // *****************
 
-// Handshake message request
+// Hello
 message req_hello {
-    repeated uint32 node_id = 1 [packed=true];
+    optional node_id id = 1;
     repeated neighborhood neighborhoods = 2;
 }
-// Handshake message reply
 message rep_hello {
 }
 
-// Get key from store request
+// Get neighborhood
+message req_get_neigh {
+    optional uint32 prefix_len = 1;
+}
+message rep_get_neigh {
+    optional neighborhood neigh = 1;
+}
+
+// Update neighborhood
+message req_update_neigh {
+    repeated neighborhood neighborhoods = 1;
+}
+message rep_update_neigh {
+}
+
+// Get key from store
 message req_get {
     optional string store_name = 1;
     optional bytes key = 2;
 }
-// Get key from store reply
 message rep_get {
     optional bytes key = 1;
     optional keyed_versions values = 2;

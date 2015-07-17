@@ -37,9 +37,24 @@ struct store_config {
     bool persistent = false;
 
     /**
-     * The number of replicas for objects written to this store
+     * The number of replicas for objects written to this store.
      */
     uint8_t rep_factor = 3;
+
+    /**
+     * The default scope of distribution for keys in this store.  The
+     * scope corresponds to the size of the neighborhood to which they
+     * keys are distributed.  1 means values are distributed to the
+     * local neighborhood only.  A value of 255 means values are
+     * distributed across the whole cluster.  Note that regardless of
+     * the scope, the values will be replicated only to rep_factor
+     * nodes.
+     *
+     * Values can still be accessed beyond the this scope using an
+     * index with larger scope and subscription from nodes in other
+     * scopes.
+     */
+    uint8_t scope = 1;
 
     /**
      * The timeout for an object that has not been updated for some

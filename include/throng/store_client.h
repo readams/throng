@@ -58,6 +58,13 @@ public:
      * store.  It takes arguments of the changed key, and a bool that
      * indicates that the change notification occurred because of a
      * local write to the store.
+     *
+     * The listener will be called at most once for each update to the
+     * value.  That is, multiple writes could be consolidated into a
+     * single notification.  The listener will be called at least once
+     * after the most recent write to the data set.
+     *
+     * The listener may be called from multiple threads concurrently.
      */
     typedef std::function<void(const K& key, bool local)> listener_type;
 

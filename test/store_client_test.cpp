@@ -129,9 +129,10 @@ BOOST_FIXTURE_TEST_CASE(protobuf, throng::test::ctx_fixture) {
     auto c1 = store_client<string, node>::new_store_client(*context, "test");
 
     node n;
-    n.add_node_id(5);
-    n.add_node_id(4);
-    n.add_node_id(3);
+    auto id = n.mutable_id();
+    id->add_id(5);
+    id->add_id(4);
+    id->add_id(3);
     n.set_hostname("127.0.0.1");
     n.set_port(1234);
 

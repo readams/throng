@@ -21,11 +21,15 @@
 #include "config.h"
 #endif
 
+#include "throng/vector_clock.h"
 #include "rpc_handler_node.h"
 #include "rpc_connection.h"
+#include "logger.h"
 
 namespace throng {
 namespace internal {
+
+LOGGER("rpc");
 
 rpc_handler_node::rpc_handler_node(ctx_internal& ctx_)
     : rpc_handler(ctx_) {
@@ -35,12 +39,16 @@ rpc_handler_node::rpc_handler_node(ctx_internal& ctx_)
 bool rpc_handler_node::handle_req_hello(rpc_connection& connection,
                                         uint64_t xid,
                                         const message::req_hello& message) {
-    if (rpc_handler::handle_req_hello(connection, xid, message)) {
-        for (auto& neigh : message.neighborhoods()) {
+    if (!rpc_handler::handle_req_hello(connection, xid, message))
+        return false;
 
-        }
-    }
-    return true;
+    message::rpc_message reply;
+    reply.set_method(message::METHOD_HELLO);
+    reply.mutable_rep()->mutable_hello();
+    connection.send_message(reply);
+    LOG(INFO) << HTAG << "Handshake succeeded";
+
+    return handle_ready(connection);
 }
 
 bool rpc_handler_node::handle_rep_hello(rpc_connection& connection,

@@ -47,9 +47,11 @@ MOSTLYCLEANFILES = $(BUILT_SOURCES)
 noinst_HEADERS = \
 	src/include/logger.h \
 	src/include/ctx_internal.h \
+	src/include/singleton_task.h \
 	src/include/store_registry.h \
 	src/include/in_memory_storage_engine.h \
 	src/include/processor.h \
+	src/include/cluster_config.h \
 	src/include/rpc_service.h \
 	src/include/rpc_connection.h \
 	src/include/rpc_handler.h \
@@ -68,10 +70,12 @@ dependency_libs = $(protobuf_LIBS) $(leveldb_LIBS) \
 libthrong_la_SOURCES = \
 	src/logger.cpp \
 	src/ctx.cpp \
+	src/singleton_task.cpp \
 	src/vector_clock.cpp \
 	src/store_registry.cpp \
 	src/in_memory_storage_engine.cpp \
 	src/processor.cpp \
+	src/cluster_config.cpp \
 	src/rpc_service.cpp \
 	src/rpc_handler.cpp \
 	src/rpc_handler_node.cpp \
@@ -90,6 +94,7 @@ throng_test_SOURCES = \
 	test/include/ctx_fixture.h \
 	test/main.cpp \
 	test/ctx_test.cpp \
+	test/singleton_task_test.cpp \
 	test/vector_clock_test.cpp \
 	test/versioned_test.cpp \
 	test/in_memory_storage_engine_test.cpp \

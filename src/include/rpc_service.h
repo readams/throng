@@ -23,7 +23,6 @@
 #define THRONG_RPC_SERVICE_H
 
 #include "ctx_internal.h"
-#include "logger.h"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
@@ -54,6 +53,10 @@ public:
 
     /**
      * Create a new RPC service
+     *
+     * @param ctx the internal context
+     * @param handler_factory a factory that will generate RPC
+     * connection handlers for new RPC node connections.
      */
     rpc_service(ctx_internal& ctx, handler_factory_type& handler_factory);
 
@@ -75,12 +78,20 @@ public:
     /**
      * Bootstrap the cluster by connecting to the provided list of seeds
      *
-     * @param seeds the list of seeds to connect to
+     * @param seeds_ the list of seeds to connect to
      */
     void set_seeds(std::vector<seed_type> seeds_) { seeds = std::move(seeds_); }
 
+    /**
+     * Check if there is a ready connection for the requested node
+     *
+     * @param node_id the node ID for the node
+     * @return true if there is an active, ready connection for the
+     * given node
+     */
+    bool is_ready(node_id& node_id);
+
 private:
-    internal::logger lgr = LOGGER("rpc_service");
     ctx_internal& ctx;
     handler_factory_type& handler_factory;
     std::vector<seed_type> seeds;
@@ -90,11 +101,12 @@ private:
     std::atomic_bool running;
     std::atomic_uint_fast64_t next_conn_id;
 
-    boost::asio::io_service::strand strand;
     boost::asio::ip::tcp::acceptor acceptor;
     boost::asio::ip::tcp::endpoint server_endpoint;
 
     typedef std::shared_ptr<rpc_connection> rpc_connection_p;
+
+    std::recursive_mutex conn_mutex;
     std::unordered_map<uint64_t, rpc_connection_p> connections;
     std::unordered_map<node_id, rpc_connection_p> node_connections;
 

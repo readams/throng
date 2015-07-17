@@ -23,7 +23,6 @@
 #define THRONG_RPC_HANDLER_H
 
 #include "ctx_internal.h"
-#include "logger.h"
 #include "throng_messages.pb.h"
 
 namespace throng {
@@ -74,6 +73,30 @@ public:
      * @return true if successful
      */
     virtual bool handle_connect(rpc_connection& connection);
+
+    /**
+     * Handle the ready event which is called after the handshake
+     * succeeds.
+     *
+     * @param connection the connection
+     * @return true if successful
+     */
+    virtual bool handle_ready(rpc_connection& connection);
+
+    /**
+     * Handler for a callback to be called by the handler on
+     * connection ready event by default ready handler.
+     */
+    typedef std::function<void(const std::shared_ptr<rpc_connection>& conn)>
+    ready_listener_type;
+
+    /**
+     * Add a ready listener callback to be called by the default ready
+     * handler.
+     *
+     * @param listener the listener to call
+     */
+    virtual void add_ready_listener(ready_listener_type listener);
 
     // **********************************
     // Generic message handling utilities
@@ -179,14 +202,24 @@ public:
                                   message::status status_code,
                                   const std::string& status_message);
 
+    std::ostream& print(std::ostream& out);
 
+protected:
+    enum class conn_state {
+        NEW,
+        READY
+    };
 
-private:
-    internal::logger lgr = LOGGER("rpc_handler");
     ctx_internal& ctx;
-
     node_id remote_node_id;
+    conn_state state = conn_state::NEW;
+
+    std::vector<ready_listener_type> ready_listeners;
 };
+
+typedef std::shared_ptr<rpc_handler> rpc_handler_p;
+
+#define HTAG ctx.get_local_node_id() << "->" << remote_node_id << " "
 
 } /* namespace internal */
 } /* namespace throng */

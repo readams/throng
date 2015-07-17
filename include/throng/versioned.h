@@ -88,25 +88,4 @@ private:
 
 } /* namespace throng */
 
-namespace std {
-
-/**
- * Specialization for node ID hash
- */
-template <>
-struct hash<throng::node_id> {
-    /**
-     * Compute a hash for the node ID
-     */
-    size_t operator ()(throng::node_id value) const {
-        size_t seed;
-        std::hash<throng::node_id::value_type> hasher;
-        for (auto n : value)
-            seed ^= hasher(n) + 0x9e3779b9 + (seed<<6) + (seed>>2);
-        return seed;
-    }
-};
-
-}
-
 #endif /* THRONG_VERSIONED_H */

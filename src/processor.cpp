@@ -22,6 +22,7 @@
 #endif
 
 #include "processor.h"
+#include "logger.h"
 
 namespace throng {
 namespace internal {
@@ -32,6 +33,8 @@ using std::unique_ptr;
 using std::chrono::system_clock;
 using std::chrono::milliseconds;
 using boost::asio::steady_timer;
+
+LOGGER("store");
 
 vector<versioned<string>> processor::get(const string& key) {
     if (delegate) return delegate->get(key);
