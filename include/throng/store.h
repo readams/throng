@@ -26,6 +26,7 @@
 #include "throng/serializer.h"
 
 #include <vector>
+#include <functional>
 
 namespace throng {
 
@@ -66,6 +67,19 @@ public:
      * the new value is obsolete
      */
     virtual bool put(const K& key, const versioned_type& value) = 0;
+
+    /**
+     * A visitor function to visit all values in the store
+     */
+    typedef std::function<void(const K&,
+                               const std::vector<versioned_type>&)> store_visitor;
+
+    /**
+     * Visit all keys in the store and apply the given function
+     *
+     * @param visitor the function to apply
+     */
+    virtual void visit(store_visitor visitor) = 0;
 
     /**
      * Get the name for this store.

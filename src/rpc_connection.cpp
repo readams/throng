@@ -66,7 +66,7 @@ void rpc_connection::start(std::string hostname, uint16_t port) {
     remote_hostname = std::move(hostname);
     remote_port = port;
 
-    LOG(INFO) << ctx.get_local_node_id()
+    LOG(INFO) << ctx.get_local_node_id() << ":" << get_conn_id()
               << " Connecting to: "
               << remote_hostname << ":" << remote_port;
 
@@ -76,17 +76,18 @@ void rpc_connection::start(std::string hostname, uint16_t port) {
                      ba::ip::tcp::resolver::iterator it) {
         if (ec) {
             if (ec != ba::error::operation_aborted) {
-                LOG(ERROR) << ctx.get_local_node_id()
-                           << " Failed to connect to "
-                           << remote_hostname << ":" << remote_port
-                           << ": " << ec.message();
+                LOG(WARNING) << ctx.get_local_node_id() << ":" << get_conn_id()
+                             << " Failed to connect " << get_conn_id() << " to "
+                             << remote_hostname << ":" << remote_port
+                             << ": " << ec.message();
                 if (it == ba::ip::tcp::resolver::iterator()) {
-                    LOG(ERROR) << "Fatal connection error";
+                    LOG(ERROR) << ctx.get_local_node_id() << ":" << get_conn_id()
+                               << " Fatal connection error";
                     stop();
                 }
             }
         } else {
-            LOG(INFO) << ctx.get_local_node_id()
+            LOG(INFO) << ctx.get_local_node_id() << ":" << get_conn_id()
                       << " Connected to "
                       << remote_hostname << ":" << remote_port;
             handler->handle_connect(*this);
@@ -98,7 +99,7 @@ void rpc_connection::start(std::string hostname, uint16_t port) {
                                      ba::ip::tcp::resolver::iterator it) {
         if (ec) {
             if (ec != ba::error::operation_aborted) {
-                LOG(ERROR) << ctx.get_local_node_id()
+                LOG(ERROR) << ctx.get_local_node_id() << ":" << get_conn_id()
                            << " Failed to resolve " << remote_hostname
                            << ":" << remote_port
                            << ": " << ec.message();
@@ -134,7 +135,7 @@ void rpc_connection::start() {
     // XXX TODO start timeout timer
     auto self = shared_from_this();
     strand.dispatch([self, this]() {
-            LOG(INFO) << ctx.get_local_node_id()
+            LOG(INFO) << ctx.get_local_node_id() << ":" << get_conn_id()
                       << " New remote connection from "
                       << socket.remote_endpoint();
 
@@ -147,8 +148,8 @@ void rpc_connection::stop() {
     // XXX TODO stop timeout timer
     auto self = shared_from_this();
     strand.dispatch([self, this]() {
-            LOG(INFO) << ctx.get_local_node_id()
-                      << " Closing connection " << get_conn_id();
+            LOG(INFO) << ctx.get_local_node_id() << ":" << get_conn_id()
+                      << " Closing connection";
             socket.close();
             stop_handler(self);
         });
@@ -195,7 +196,7 @@ void rpc_connection::read_message() {
     auto handle_size = [self, this](const error_code& ec, size_t len) {
         if (ec) {
             if (ec != ba::error::operation_aborted) {
-                LOG(ERROR) << ctx.get_local_node_id()
+                LOG(ERROR) << ctx.get_local_node_id() << ":" << get_conn_id()
                           << " Could not read from socket: "
                           << ec.message();
                 stop();
@@ -205,7 +206,7 @@ void rpc_connection::read_message() {
 
         size_t msg_len = ntohl(*(uint32_t*)(&buffer[0]));
         if (len > 1024*1024*64) {
-            LOG(ERROR) << ctx.get_local_node_id()
+            LOG(ERROR) << ctx.get_local_node_id() << ":" << get_conn_id()
                        << " Invalid message length: " << msg_len;
             stop();
             return;
@@ -215,7 +216,7 @@ void rpc_connection::read_message() {
         auto handle_body = [self, this](const error_code& ec, size_t len) {
             if (ec) {
                 if (ec != ba::error::operation_aborted) {
-                    LOG(ERROR) << ctx.get_local_node_id()
+                    LOG(ERROR) << ctx.get_local_node_id() << ":" << get_conn_id()
                                << " Could not read from socket: "
                                << ec.message();
                     stop();

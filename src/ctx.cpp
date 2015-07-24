@@ -24,8 +24,6 @@
 #include "ctx_internal.h"
 #include "cluster_config.h"
 #include "logger.h"
-#include "throng/store_client.h"
-#include "throng/serializer_protobuf.h"
 #include "throng_messages.pb.h"
 #include "store_registry.h"
 #include "rpc_service.h"
@@ -37,9 +35,6 @@
 #include <thread>
 
 //#include <leveldb/db.h>
-
-THRONG_PROTOBUF_SERIALIZER(throng::message::node)
-THRONG_PROTOBUF_SERIALIZER(throng::message::neighborhood)
 
 namespace throng {
 namespace internal {
@@ -56,12 +51,6 @@ using throng::message::neighborhood;
 
 LOGGER("core");
 
-static const string NODE_STORE = "__sys_node_store";
-static const string NEIGH_STORE = "__sys_neigh_store";
-
-typedef store_client<string, node> node_client_t;
-typedef store_client<string, neighborhood> neigh_client_t;
-
 class ctx_impl : public ctx_internal {
 public:
     ctx_impl(string db_path);
@@ -73,7 +62,7 @@ public:
 
     virtual void configure_local(node_id node_id,
                                  std::string hostname, uint16_t port,
-                                 bool master_eligible = true);
+                                 bool master_eligible = true) override;
     virtual void add_seed(std::string hostname, uint16_t port) override;
     virtual void register_store(const std::string& name) override;
     virtual void register_store(const std::string& name,
@@ -93,7 +82,8 @@ public:
     virtual boost::asio::io_service& get_io_service() override;
     virtual rpc_service& get_rpc_service() override;
     virtual seed_type& get_local_seed() override;
-    virtual std::shared_ptr<cluster_config> get_cluster_config() override;
+    virtual cluster_config_p get_cluster_config() override;
+    virtual void set_static_config(cluster_config_p config) override;
 
 private:
     internal::store_registry registry;
@@ -105,11 +95,9 @@ private:
     rpc_service::handler_factory_type handler_factory;
     rpc_service rpc;
 
-    unique_ptr<node_client_t> node_client;
-    unique_ptr<neigh_client_t> neigh_client;
-
     std::mutex config_mutex;
-    shared_ptr<cluster_config> config;
+    cluster_config_p static_config;
+    cluster_config_p current_config;
 
     node_id local_node_id;
     rpc_service::seed_type local_seed;
@@ -131,15 +119,6 @@ ctx_impl::ctx_impl(string db_path)
       handler_factory([this]() { return make_shared<rpc_handler_node>(*this); }),
       rpc(*this, handler_factory) {
 
-    store_config node_store_conf;
-    node_store_conf.persistent = true;
-    register_store(NODE_STORE, node_store_conf);
-    node_client = node_client_t::new_store_client(*this, NODE_STORE);
-
-    store_config neigh_store_conf;
-    neigh_store_conf.persistent = true;
-    register_store(NEIGH_STORE, neigh_store_conf);
-    neigh_client = neigh_client_t::new_store_client(*this, NEIGH_STORE);
 }
 
 ctx_impl::~ctx_impl() {
@@ -147,11 +126,11 @@ ctx_impl::~ctx_impl() {
 }
 
 void ctx_impl::configure_local(node_id node_id, string hostname, uint16_t port,
-                               bool master_eligible) {
+                               bool master_eligible_) {
     std::unique_lock<std::mutex> guard(config_mutex);
     local_seed = {std::move(hostname), port};
     local_node_id = std::move(node_id);
-    master_eligible = std::move(master_eligible);
+    master_eligible = master_eligible_;
 }
 
 rpc_service::seed_type& ctx_impl::get_local_seed() {
@@ -159,9 +138,15 @@ rpc_service::seed_type& ctx_impl::get_local_seed() {
     return local_seed;
 }
 
-std::shared_ptr<cluster_config> ctx_impl::get_cluster_config() {
+cluster_config_p ctx_impl::get_cluster_config() {
     std::unique_lock<std::mutex> guard(config_mutex);
-    return config;
+    return current_config;
+}
+
+void ctx_impl::set_static_config(cluster_config_p config) {
+    std::unique_lock<std::mutex> guard(config_mutex);
+    static_config = std::move(config);
+    current_config = static_config;
 }
 
 void ctx_impl::add_seed(std::string hostname, uint16_t port) {

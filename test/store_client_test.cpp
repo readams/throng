@@ -27,6 +27,7 @@
 
 #include <boost/test/unit_test.hpp>
 #include <set>
+#include <unordered_map>
 
 THRONG_PROTOBUF_SERIALIZER(throng::message::node)
 
@@ -35,6 +36,7 @@ BOOST_AUTO_TEST_SUITE(store_client_test)
 using std::string;
 using std::vector;
 using std::make_shared;
+using std::unordered_map;
 using throng::store_client;
 using throng::versioned;
 using throng::vector_clock;
@@ -61,9 +63,29 @@ BOOST_FIXTURE_TEST_CASE(basic, throng::test::string_store_fixture) {
     BOOST_REQUIRE(!v2);
 }
 
+BOOST_FIXTURE_TEST_CASE(visitor, throng::test::string_store_fixture) {
+    unordered_map<string, string> expected =
+        {{"1", "one"}, {"2", "two"}, {"3", "three"}};
+
+    for (auto& e : expected) {
+        auto v = client->get(e.first);
+        client->update(e.first, v, e.second);
+    }
+    int count = 0;
+
+    auto v = [&expected, &count](string k, versioned<string> v) {
+        BOOST_REQUIRE(v);
+        BOOST_REQUIRE(expected.find(k) != expected.end());
+        BOOST_CHECK_EQUAL(expected.at(k), v.get());
+        count += 1;
+    };
+    client->visit(v);
+    BOOST_CHECK_EQUAL(3, count);
+}
+
 BOOST_FIXTURE_TEST_CASE(inconsistency, throng::test::string_store_fixture) {
     auto union_resolver =
-        [](vector<versioned<string>>& items) -> versioned<string> {
+        [](const vector<versioned<string>>& items) -> versioned<string> {
         std::set<char> chars;
         auto now = std::chrono::system_clock::now();
         throng::vector_clock maxClock { now, {} };

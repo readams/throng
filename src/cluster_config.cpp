@@ -31,11 +31,50 @@
 namespace throng {
 namespace internal {
 
+using std::unordered_map;
+using boost::optional;
+
 LOGGER("core");
+
+const std::string NODE_STORE = "__sys_node_store";
+const std::string NEIGH_STORE = "__sys_neigh_store";
 
 cluster_config::cluster_config()
      {}
 
+void cluster_config::add_neighborhood(neigh_p neigh) {
+    node_id prefix;
+    if (!neigh->has_prefix()) return;
+
+    for (auto i : neigh->prefix().id())
+        prefix.push_back(i);
+
+    neighs.insert({std::move(prefix), std::move(neigh)});
+}
+
+/**
+ * Get a neighborhood by its ID.
+ *
+ * @param id the ID of the neighborhood
+ * @param neigh_p the corresponding neighborhood if it exists, or
+ * boost::none otherwise.
+ */
+optional<cluster_config::neigh_p>
+cluster_config::get_neighborhood(node_id& id) const {
+    auto it = neighs.find(id);
+    if (it != neighs.end()) return it->second;
+    return boost::none;
+}
+
+/**
+ * Get all neighborhoods
+ *
+ * @return the neighborhood map
+ */
+const decltype(cluster_config::neighs)&
+cluster_config::get_neighborhoods() const {
+    return neighs;
+}
 
 } /* namespace internal */
 } /* namespace throng */

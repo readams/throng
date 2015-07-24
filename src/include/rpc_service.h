@@ -23,6 +23,7 @@
 #define THRONG_RPC_SERVICE_H
 
 #include "ctx_internal.h"
+#include "throng_messages.pb.h"
 
 #include <boost/asio/ip/tcp.hpp>
 #include <boost/asio/strand.hpp>
@@ -32,6 +33,7 @@
 #include <unordered_map>
 #include <atomic>
 #include <utility>
+#include <memory>
 
 namespace throng {
 namespace internal {
@@ -94,6 +96,10 @@ public:
 private:
     ctx_internal& ctx;
     handler_factory_type& handler_factory;
+
+    std::unique_ptr<node_client_t> node_client;
+    std::unique_ptr<neigh_client_t> neigh_client;
+
     std::vector<seed_type> seeds;
     decltype(seeds)::iterator seed_iter;
     uint64_t bootstrap_conn_id = std::numeric_limits<uint64_t>::max();

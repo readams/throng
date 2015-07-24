@@ -42,15 +42,16 @@ store_registry::store_registry(ctx_internal& ctx_, const string db_path_)
 
 void store_registry::register_store(const std::string& name,
                                     const store_config& config) {
-    typedef std::unique_ptr<store<std::string, std::string>> storage_engine_p;
+    //typedef std::unique_ptr<store<std::string, std::string>> storage_engine_p;
     typedef std::unique_ptr<processor> processor_p;
 
     processor_p storage;
     if (config.persistent) {
         // XXX - TODO replace with persistent storage engine
-        storage_engine_p delegate =
-            storage_engine_p{ new in_memory_storage_engine(name) };
-        storage = processor_p{ new processor(ctx, std::move(delegate), config) };
+        //storage_engine_p delegate =
+        //    storage_engine_p{ new in_memory_storage_engine(name) };
+        //storage = processor_p{ new processor(ctx, std::move(delegate), config) };
+        storage = processor_p{ new processor(ctx, name, config) };
     } else {
         storage = processor_p{ new processor(ctx, name, config) };
     }

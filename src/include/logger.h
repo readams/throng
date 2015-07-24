@@ -54,10 +54,17 @@ public:
      */
     struct log_message {
         /**
+         * Create a new log message
+         */
+        log_message(logger& lgr, log_level level,  char const* file,
+                    int line, char const* function) :
+            lgr_(lgr), level_(level), file_(file), line_(line),
+            function_(function) {}
+        /**
          * Destroy the message and log to the logger
          */
         ~log_message() {
-            lgr.log(level_, file_, line_, function_, buffer_.str());
+            lgr_.log(level_, file_, line_, function_, buffer_.str());
         }
         /**
          * Get a stream for appending to the message
@@ -69,7 +76,7 @@ public:
         /**
          * The logger associated with the message
          */
-        logger& lgr;
+        logger& lgr_;
 
         /**
          * The log level

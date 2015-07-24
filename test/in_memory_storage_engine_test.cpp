@@ -31,9 +31,9 @@ using std::string;
 using std::shared_ptr;
 using std::make_shared;
 
-BOOST_AUTO_TEST_CASE(basic) {
-    in_memory_storage_engine e {"test"};
-    // XXX TODO
-}
+//BOOST_AUTO_TEST_CASE(basic) {
+//    in_memory_storage_engine e {"test"};
+//    // XXX TODO
+//}
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -99,11 +99,10 @@ public:
 
     virtual std::vector<versioned<std::string>>
     get(const std::string& key) override;
-
     virtual bool put(const std::string& key,
                      const versioned_type& value) override;
-
     virtual const std::string& get_name() const override;
+    virtual void visit(store_visitor visitor) override;
 
 private:
     /**

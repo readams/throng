@@ -34,7 +34,8 @@ namespace throng {
 namespace internal {
 
 /**
- * Provides configuration and state management for the throng cluster
+ * Container for stores that handles initializing and maintaining the
+ * stores.
  */
 class store_registry {
 public:

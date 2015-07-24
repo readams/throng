@@ -26,11 +26,11 @@
 #include <boost/test/unit_test.hpp>
 
 #include <thread>
+#include <atomic>
 
 using boost::asio::io_service;
 using throng::internal::singleton_task;
 using std::chrono::milliseconds;
-using std::atomic_int;
 
 LOGGER("test.singleton_task");
 

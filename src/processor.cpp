@@ -158,5 +158,13 @@ const string& processor::get_name() const {
     return name;
 }
 
+void processor::visit(store_visitor visitor) {
+    std::lock_guard<std::mutex> guard(item_mutex);
+    auto& key_index = item_map.get<key_tag>();
+    for (auto& i : key_index) {
+        visitor(i.key, i.details->values);
+    }
+}
+
 } /* namespace internal */
 } /* namespace throng */

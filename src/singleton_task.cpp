@@ -36,8 +36,7 @@ using boost::system::error_code;
 
 singleton_task::singleton_task(boost::asio::io_service& io_service_,
                                std::function<void()> task)
-    : io_service(io_service_), task(std::move(task)),
-      task_timer(io_service_) { }
+    : task(std::move(task)), task_timer(io_service_) { }
 singleton_task::~singleton_task() {
     cancel();
 }

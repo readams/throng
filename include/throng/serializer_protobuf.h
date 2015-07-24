@@ -49,6 +49,12 @@
             result->ParseFromString(*serialized);                       \
             return result;                                              \
         }                                                               \
+                                                                        \
+        _MessageLite deserialize(const std::string& serialized) const { \
+            _MessageLite result;                                        \
+            result.ParseFromString(serialized);                         \
+            return result;                                              \
+        }                                                               \
     };}
 
 #endif /* THRONG_PROTOBUF_SERIALIZER */

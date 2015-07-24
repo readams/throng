@@ -82,7 +82,6 @@ public:
     void cancel();
 
 private:
-    boost::asio::io_service& io_service;
     std::mutex task_mutex;
     std::function<void()> task;
     boost::asio::steady_timer task_timer;

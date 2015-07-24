@@ -51,7 +51,7 @@ public:
      * counters, etc.  Will never be called on an empty vector.
      */
     typedef std::function<versioned<V>
-                          (std::vector<versioned<V>>& items)> resolver_type;
+                          (const std::vector<versioned<V>>& items)> resolver_type;
 
     /**
      * A listener to get notifications for changes to keys in the
@@ -100,20 +100,20 @@ public:
     static std::unique_ptr<store_client<K, V, KS, VS>>
         new_store_client(ctx& context, const std::string& name) {
         auto def_resolver =
-        [](std::vector<versioned<V>>& items) -> versioned<V> {
-            auto& max = items.at(0);
-            auto maxClock = max.get_version();
+        [](const std::vector<versioned<V>>& items) -> versioned<V> {
+            auto max = &items.at(0);
+            auto maxClock = max->get_version();
             auto maxTime = maxClock.get_timestamp();
             auto now = std::chrono::system_clock::now();
             for (auto& value : items) {
                 auto& clock = value.get_version();
                 if (clock.get_timestamp() > maxTime) {
-                    max = value;
+                    max = &value;
                     maxTime = clock.get_timestamp();
                 }
                 maxClock = maxClock.merge(clock, now);
             }
-            return versioned<V>(max.get_ptr(), maxClock);
+            return versioned<V>(max->get_ptr(), maxClock);
         };
         return new_store_client(context, name, def_resolver);
     }
@@ -125,21 +125,7 @@ public:
      * @return a vector of values
      */
     versioned<V> get(const K& key) const {
-        std::vector<versioned<std::string>> vs =
-            delegate.get(key_ser.serialize(key));
-        if (vs.size() == 0) return versioned<V>{ nullptr, {} };
-
-        std::vector<versioned<V>> result;
-        result.reserve(vs.size());
-        for (auto& vv : vs) {
-            if (vv) {
-                result.emplace_back(value_ser.deserialize(vv.get_ptr()),
-                                    vv.get_version());
-            } else {
-                result.emplace_back(nullptr, vv.get_version());
-            }
-        }
-        return resolver(result);
+        return resolve_values(delegate.get(key_ser.serialize(key)));
     }
 
     /**
@@ -179,6 +165,26 @@ public:
     }
 
     /**
+     * A visitor function to visit all values in the store
+     */
+    typedef std::function<void(const K&,
+                               const versioned<V>&)> visitor_type;
+
+    /**
+     * Visit all keys in the store and apply the given function
+     *
+     * @param visitor the function to apply
+     */
+    void visit(visitor_type visitor) {
+        auto sv =
+            [&visitor, this](const std::string& k,
+                             const std::vector<versioned<std::string>>& vs) {
+           visitor(key_ser.deserialize(k), resolve_values(vs));
+       };
+       delegate.visit(sv);
+    }
+
+    /**
      * Get the name for this store.
      *
      * @return the name for the store
@@ -214,6 +220,23 @@ private:
                  resolver_type resolver_):
         context(context_), delegate(delegate_),
         resolver(std::move(resolver_)) { }
+
+    versioned<V>
+    resolve_values(const std::vector<versioned<std::string>> vs) const {
+        if (vs.size() == 0) return versioned<V>{ nullptr, {} };
+
+        std::vector<versioned<V>> result;
+        result.reserve(vs.size());
+        for (auto& vv : vs) {
+            if (vv) {
+                result.emplace_back(value_ser.deserialize(vv.get_ptr()),
+                                    vv.get_version());
+            } else {
+                result.emplace_back(nullptr, vv.get_version());
+            }
+        }
+        return resolver(result);
+    }
 
     ctx& context;
     store<std::string, std::string>& delegate;

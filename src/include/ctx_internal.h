@@ -22,6 +22,8 @@
 #ifndef THRONG_CTX_INTERNAL_H
 #define THRONG_CTX_INTERNAL_H
 
+#include "cluster_config.h"
+
 #include "throng/ctx.h"
 
 #include <boost/asio/io_service.hpp>
@@ -30,7 +32,6 @@ namespace throng {
 namespace internal {
 
 class rpc_service;
-class cluster_config;
 
 /**
  * Provides access to library-wide services for internal objects
@@ -70,7 +71,14 @@ public:
      *
      * @return a shared pointer to the current cluster configuration
      */
-    virtual std::shared_ptr<cluster_config> get_cluster_config() = 0;
+    virtual cluster_config_p get_cluster_config() = 0;
+
+    /**
+     * Set a static node configuration for the cluster
+     *
+     * @param config the static configuration to set
+     */
+    virtual void set_static_config(cluster_config_p config) = 0;
 };
 
 } /* namespace internal */

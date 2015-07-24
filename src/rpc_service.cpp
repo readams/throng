@@ -24,6 +24,7 @@
 #include "rpc_service.h"
 #include "rpc_connection.h"
 #include "logger.h"
+#include "cluster_config.h"
 
 namespace throng {
 namespace internal {
@@ -39,11 +40,21 @@ rpc_service::rpc_service(ctx_internal& ctx_,
     : ctx(ctx_), handler_factory(handler_factory_),
       running(false), next_conn_id(0), acceptor(ctx.get_io_service()) {
 
+    store_config node_store_conf;
+    node_store_conf.persistent = true;
+    ctx.register_store(NODE_STORE, node_store_conf);
+
+    store_config neigh_store_conf;
+    neigh_store_conf.persistent = true;
+    ctx.register_store(NEIGH_STORE, neigh_store_conf);
 }
 
 void rpc_service::start() {
     if (running.load()) return;
     running.store(true);
+
+    node_client = node_client_t::new_store_client(ctx, NODE_STORE);
+    neigh_client = neigh_client_t::new_store_client(ctx, NEIGH_STORE);
 
     seed_iter = seeds.begin();
 

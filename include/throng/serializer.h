@@ -53,6 +53,13 @@ public:
      */
     std::shared_ptr<const V>
     deserialize(const std::shared_ptr<const std::string>& serialized) const;
+
+    /**
+     * Deserialize a string into the user-defined type
+     * @param serialized the value to deserialize
+     * @return the new deserialized value
+     */
+    V deserialize(const std::string& serialized) const;
 };
 
 /**
@@ -91,6 +98,16 @@ public:
      */
     std::shared_ptr<const std::string>
     deserialize(const std::shared_ptr<const std::string>& serialized) const {
+        return serialized;
+    }
+
+    /**
+     * Simply return the value
+     * @param serialized the value to serialize
+     * @return the input value
+     * @see serialize::deserialize
+     */
+    std::string deserialize(const std::string& serialized) const {
         return serialized;
     }
 };
