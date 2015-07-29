@@ -59,7 +59,7 @@ public:
     rpc_connection(ctx_internal& ctx,
                    uint64_t conn_id,
                    std::shared_ptr<rpc_handler> handler,
-                   stop_handler_type stop_handler = stop_handler_type());
+                   stop_handler_type stop_handler = stop_handler_type{});
     rpc_connection(const rpc_connection&) = delete;
     rpc_connection& operator=(const rpc_connection&) = delete;
 

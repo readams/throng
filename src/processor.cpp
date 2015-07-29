@@ -30,7 +30,7 @@ namespace internal {
 using std::vector;
 using std::string;
 using std::unique_ptr;
-using std::chrono::system_clock;
+using std::chrono::steady_clock;
 using std::chrono::milliseconds;
 using boost::asio::steady_timer;
 
@@ -79,7 +79,7 @@ void processor::on_proc_timer(const boost::system::error_code& ec) {
     if (!running)
         return;
 
-    auto now = system_clock::now();
+    auto now = steady_clock::now();
     static const time_point epoch;
 
     while (running) {
@@ -110,7 +110,7 @@ void processor::notify(const std::string& key, bool local) {
 
 bool processor::doput(item_details& rs,
                       const versioned<string>& value) {
-    std::vector<versioned_type> new_values;
+    std::vector<versioned_t> new_values;
 
     for (auto vit = rs.values.begin(); vit != rs.values.end(); vit++) {
         vector_clock::occurred o =

@@ -47,7 +47,7 @@ public:
     /**
      * The type of versioned value used by the store
      */
-    typedef versioned<V> versioned_type;
+    typedef versioned<V> versioned_t;
 
     /**
      * Get the set of values associated with a given key, or an empty
@@ -56,7 +56,7 @@ public:
      * @param key the key to retrieve
      * @return a vector of values
      */
-    virtual std::vector<versioned_type> get(const K& key) = 0;
+    virtual std::vector<versioned_t> get(const K& key) = 0;
 
     /**
      * Put the given value into the store
@@ -66,13 +66,13 @@ public:
      * @return true if the value was successfully written, or false if
      * the new value is obsolete
      */
-    virtual bool put(const K& key, const versioned_type& value) = 0;
+    virtual bool put(const K& key, const versioned_t& value) = 0;
 
     /**
      * A visitor function to visit all values in the store
      */
     typedef std::function<void(const K&,
-                               const std::vector<versioned_type>&)> store_visitor;
+                               const std::vector<versioned_t>&)> store_visitor;
 
     /**
      * Visit all keys in the store and apply the given function

@@ -49,7 +49,7 @@ void cluster_config::add_neighborhood(neigh_p neigh) {
     for (auto i : neigh->prefix().id())
         prefix.push_back(i);
 
-    neighs.insert({std::move(prefix), std::move(neigh)});
+    neighs.emplace(std::move(prefix), std::move(neigh));
 }
 
 /**

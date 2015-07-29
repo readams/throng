@@ -56,11 +56,11 @@ public:
      * @param key the key to retrieve
      * @return a vector of values
      */
-    virtual std::vector<versioned_type>
+    virtual std::vector<versioned_t>
     get(const std::string& key) override;
 
     virtual bool put(const std::string& key,
-                     const versioned_type& value) override;
+                     const versioned_t& value) override;
 
     /**
      * Get the name for this store.
@@ -74,7 +74,7 @@ private:
     std::mutex lock;
 
     struct record {
-        std::vector<versioned_type> values;
+        std::vector<versioned_t> values;
     };
 
     std::unordered_map<std::string, record> records;

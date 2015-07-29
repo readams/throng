@@ -29,8 +29,6 @@
 #include <set>
 #include <unordered_map>
 
-THRONG_PROTOBUF_SERIALIZER(throng::message::node)
-
 BOOST_AUTO_TEST_SUITE(store_client_test)
 
 using std::string;

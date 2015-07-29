@@ -115,7 +115,7 @@ public:
      * local write to the store.
      */
     typedef std::function<void(const std::string& key, bool local)>
-    raw_listener_type;
+    raw_listener_t;
 
     /**
      * Register a listener to get raw notifications for the specified
@@ -127,7 +127,7 @@ public:
      * @param listener the listener to register.
      */
     virtual void add_raw_listener(const std::string& store_name,
-                                  raw_listener_type listener) = 0;
+                                  raw_listener_t listener) = 0;
 
     /**
      * Get a raw reference to the underlying store.  Note that this is

@@ -28,7 +28,7 @@ namespace throng {
  * Serialize data from the internal binary string representation to
  * the "real" user-defined type
  */
-template <typename V>
+template <typename V, typename = void>
 class serializer {
 public:
     /**

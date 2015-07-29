@@ -57,14 +57,21 @@ public:
     /**
      * A seed for bootstrapping the cluster
      */
-    typedef std::pair<std::string, uint16_t> seed_type;
+    typedef std::pair<std::string, uint16_t> seed_t;
 
     /**
      * Get the seed information for the local node
      *
      * @return the hostname and port number for the local node
      */
-    virtual seed_type& get_local_seed() = 0;
+    virtual seed_t& get_local_seed() = 0;
+
+    /**
+     * Return true if the current node is a master node
+     *
+     * @return true if the current node is a master node
+     */
+    virtual bool is_master() = 0;
 
     /**
      * Get the current cluster configuration

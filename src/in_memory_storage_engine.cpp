@@ -48,7 +48,7 @@ bool in_memory_storage_engine::put(const string& key,
     std::lock_guard<std::mutex> guard(lock);
 
     record& rs = records[key];
-    std::vector<versioned_type> new_values;
+    std::vector<versioned_t> new_values;
 
     for (auto vit = rs.values.begin(); vit != rs.values.end(); vit++) {
         vector_clock::occurred o =

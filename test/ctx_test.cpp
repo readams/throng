@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(connect) {
     using internal::cluster_config_p;
     using internal::cluster_config;
 
-    std::vector<node_id> nids { {1,1}, {1,2}, {2,1}, {2,2} };
+    std::vector<node_id> nids { {1,1}, {1,2}, {1,3}, {2,1} };
     std::vector<std::unique_ptr<ctx>> ctxs;
 
     ctxs.push_back(ctx::new_ctx((storage.path() / "n1").string()));
@@ -56,30 +56,29 @@ BOOST_AUTO_TEST_CASE(connect) {
     ctxs.push_back(ctx::new_ctx((storage.path() / "n4").string()));
 
     ctxs[0]->configure_local(nids[0], "127.0.0.1", 17171);
-    ctxs[1]->configure_local(nids[1], "127.0.0.1", 17172, false);
-    ctxs[2]->configure_local(nids[2], "127.0.0.1", 17173);
-    ctxs[3]->configure_local(nids[3], "127.0.0.1", 17174, false);
+    ctxs[1]->configure_local(nids[1], "127.0.0.1", 17172);
+    ctxs[2]->configure_local(nids[2], "127.0.0.1", 17173, false);
+    ctxs[3]->configure_local(nids[3], "127.0.0.1", 17174);
 
-    for (auto& c : ctxs) {
+    for (size_t i = 0; i < ctxs.size(); i++) {
+        auto& c = ctxs[i];
         c->register_store("test");
         auto nc = node_client_t::new_store_client(*c, internal::NODE_STORE);
         message::node n;
         n.set_hostname("127.0.0.1");
 
-        for (size_t i = 0; i < ctxs.size(); i++) {
-            if (ctxs[i].get() == c.get()) continue;
-
-            n.set_port(17171 + i);
-            n.set_master_eligible((i % 2) == 0);
+        for (size_t j = 0; j < ctxs.size(); j++) {
+            n.set_port(17171 + j);
+            n.set_master_eligible(j != 2);
 
             n.clear_id();
             auto id = n.mutable_id();
-            for (auto i : c->get_local_node_id())
-                id->add_id(i);
-        }
+            for (auto lid : ctxs[j]->get_local_node_id())
+                id->add_id(lid);
 
-        auto v = nc->get(n.id());
-        nc->update(n.id(), v, n);
+            auto v = nc->get(n.id());
+            nc->update(n.id(), v, n);
+        }
     }
 
     std::shared_ptr<cluster_config> config0(new cluster_config());
@@ -91,25 +90,28 @@ BOOST_AUTO_TEST_CASE(connect) {
     for (auto i : nids[0])
         master->add_id(i);
     master = neigh_->add_masters();
-    for (auto i : nids[2])
+    for (auto i : nids[3])
         master->add_id(i);
 
     cluster_config::neigh_p neigh_0(new message::neighborhood());
-    auto prefix = neigh_->mutable_prefix();
-    prefix->add_id(0);
-    master = neigh_->add_masters();
+    auto prefix = neigh_0->mutable_prefix();
+    prefix->add_id(1);
+    master = neigh_0->add_masters();
     for (auto i : nids[0])
+        master->add_id(i);
+    master = neigh_0->add_masters();
+    for (auto i : nids[1])
         master->add_id(i);
 
     cluster_config::neigh_p neigh_1(new message::neighborhood());
-    prefix = neigh_->mutable_prefix();
-    prefix->add_id(1);
-    master = neigh_->add_masters();
-    for (auto i : nids[2])
+    prefix = neigh_1->mutable_prefix();
+    prefix->add_id(2);
+    master = neigh_1->add_masters();
+    for (auto i : nids[3])
         master->add_id(i);
 
     config0->add_neighborhood(neigh_);
-    config0->add_neighborhood(neigh_1);
+    config0->add_neighborhood(neigh_0);
     config1->add_neighborhood(neigh_);
     config1->add_neighborhood(neigh_1);
 
@@ -118,28 +120,30 @@ BOOST_AUTO_TEST_CASE(connect) {
     dynamic_cast<internal::ctx_internal*>(ctxs[1].get())
         ->set_static_config(config0);
     dynamic_cast<internal::ctx_internal*>(ctxs[2].get())
-        ->set_static_config(config1);
+        ->set_static_config(config0);
     dynamic_cast<internal::ctx_internal*>(ctxs[3].get())
         ->set_static_config(config1);
-
-    ctxs[1]->add_seed("127.0.0.1", 17171);
-    ctxs[2]->add_seed("127.0.0.1", 17171);
-    ctxs[3]->add_seed("127.0.0.1", 17171);
 
     for (auto& c : ctxs)
         c->start();
 
-    auto check_ready = [&ctxs, &nids]() -> bool {
-        for (auto& nid : nids) {
-            if (nid == ctxs[0]->get_local_node_id()) continue;
-            if (!dynamic_cast<internal::ctx_internal*>(ctxs[0].get())
-                ->get_rpc_service().is_ready(nid)) {
-                return false;
-            }
-        }
+    auto ctx_check = [](ctx* c, node_id& nid) -> bool {
+        return (dynamic_cast<internal::ctx_internal*>(c)
+                ->get_rpc_service().is_ready(nid));
+    };
+    auto check_ready = [&ctxs, &nids, &ctx_check]() -> bool {
+        if (!ctx_check(ctxs[0].get(), nids[1]) ||
+            !ctx_check(ctxs[0].get(), nids[2]) ||
+            !ctx_check(ctxs[0].get(), nids[3]) ||
+            !ctx_check(ctxs[1].get(), nids[0]) ||
+            !ctx_check(ctxs[1].get(), nids[2]) ||
+            !ctx_check(ctxs[2].get(), nids[0]) ||
+            !ctx_check(ctxs[2].get(), nids[1]) ||
+            !ctx_check(ctxs[3].get(), nids[0]))
+            return false;
         return true;
     };
-    WAIT_FOR(check_ready(), 100);
+    WAIT_FOR(check_ready(), 500);
 
     for (auto& c : ctxs)
         c->stop();

@@ -89,7 +89,7 @@ public:
      *
      * @param listener the listener to add
      */
-    virtual void add_listener(ctx::raw_listener_type listener) {
+    virtual void add_listener(ctx::raw_listener_t listener) {
         listeners.push_back(std::move(listener));
     }
 
@@ -100,7 +100,7 @@ public:
     virtual std::vector<versioned<std::string>>
     get(const std::string& key) override;
     virtual bool put(const std::string& key,
-                     const versioned_type& value) override;
+                     const versioned_t& value) override;
     virtual const std::string& get_name() const override;
     virtual void visit(store_visitor visitor) override;
 
@@ -131,18 +131,18 @@ private:
      * Listeners that will be notified when data in the store is
      * updated
      */
-    std::vector<ctx::raw_listener_type> listeners;
+    std::vector<ctx::raw_listener_t> listeners;
 
     /**
      * True if the store is still running
      */
     volatile bool running = false;
 
-    typedef std::chrono::system_clock::time_point time_point;
+    typedef std::chrono::steady_clock::time_point time_point;
 
     struct item_details {
         uint32_t key_hash[5];
-        std::vector<versioned_type> values;
+        std::vector<versioned_t> values;
         time_point last_refresh;
         time_point last_resolve;
     };

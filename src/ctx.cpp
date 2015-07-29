@@ -71,7 +71,7 @@ public:
     virtual void stop() override;
     virtual node_id get_local_node_id() override;
     virtual void add_raw_listener(const std::string& store_name,
-                                  raw_listener_type listener) override;
+                                  raw_listener_t listener) override;
     virtual store<std::string,std::string>&
     get_raw_store(const std::string& name) override;
 
@@ -81,7 +81,8 @@ public:
 
     virtual boost::asio::io_service& get_io_service() override;
     virtual rpc_service& get_rpc_service() override;
-    virtual seed_type& get_local_seed() override;
+    virtual seed_t& get_local_seed() override;
+    virtual bool is_master() override;
     virtual cluster_config_p get_cluster_config() override;
     virtual void set_static_config(cluster_config_p config) override;
 
@@ -92,7 +93,7 @@ private:
     unique_ptr<io_service::work> work;
     std::vector<std::thread> workers;
 
-    rpc_service::handler_factory_type handler_factory;
+    rpc_service::handler_factory_t handler_factory;
     rpc_service rpc;
 
     std::mutex config_mutex;
@@ -100,9 +101,9 @@ private:
     cluster_config_p current_config;
 
     node_id local_node_id;
-    rpc_service::seed_type local_seed;
+    rpc_service::seed_t local_seed;
     bool master_eligible = true;
-    vector<seed_type> seeds;
+    vector<seed_t> seeds;
     //unique_ptr<leveldb::DB> systemDb;
 };
 
@@ -133,9 +134,14 @@ void ctx_impl::configure_local(node_id node_id, string hostname, uint16_t port,
     master_eligible = master_eligible_;
 }
 
-rpc_service::seed_type& ctx_impl::get_local_seed() {
+rpc_service::seed_t& ctx_impl::get_local_seed() {
     std::unique_lock<std::mutex> guard(config_mutex);
     return local_seed;
+}
+
+bool ctx_impl::is_master() {
+    // TODO election
+    return master_eligible;
 }
 
 cluster_config_p ctx_impl::get_cluster_config() {
@@ -159,7 +165,7 @@ void ctx_impl::register_store(const std::string& name) {
 }
 
 void ctx_impl::register_store(const std::string& name,
-                         const store_config& config) {
+                              const store_config& config) {
     registry.register_store(name, config);
 }
 
@@ -225,7 +231,7 @@ store<string,string>& ctx_impl::get_raw_store(const string& name) {
 }
 
 void ctx_impl::add_raw_listener(const std::string& store_name,
-                                raw_listener_type listener) {
+                                raw_listener_t listener) {
     registry.get(store_name).add_listener(listener);
 }
 

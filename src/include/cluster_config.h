@@ -33,10 +33,6 @@
 #include <unordered_map>
 #include <memory>
 
-THRONG_PROTOBUF_SERIALIZER(throng::message::node)
-THRONG_PROTOBUF_SERIALIZER(throng::message::node_id)
-THRONG_PROTOBUF_SERIALIZER(throng::message::neighborhood)
-
 namespace throng {
 namespace internal {
 
